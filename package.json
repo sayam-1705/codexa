@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "codexa": "./bin/codexa.js"
+    "codexa": "bin/codexa.js"
   },
   "exports": {
     ".": "./bin/codexa.js",
@@ -35,7 +35,7 @@
   "homepage": "https://codexa.dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/codexa.git"
+    "url": "git+https://github.com/sayam-1705/codexa.git"
   },
   "files": [
     "bin/",

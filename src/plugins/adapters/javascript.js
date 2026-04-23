@@ -16,7 +16,7 @@ const adapter = {
   extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.d.ts'],
   linter: 'ESLint 8',
   license: 'MIT',
-  homepage: 'https://github.com/anthropics/codexa',
+  homepage: 'https://github.com/sayam-1705/codexa',
 
   /**
    * Detect if repository contains JavaScript/TypeScript

@@ -29,7 +29,7 @@ Call to action:
 npm install -g codexa
 ```
 
-GitHub: https://github.com/your-org/codexa
+GitHub: https://github.com/sayam-1705/codexa
 
 ## Dev.to Article Outline
 

@@ -340,9 +340,9 @@ rm .git/hooks/pre-commit
 
 If you hit something not listed here:
 
-1. Check [GitHub Issues](https://github.com/anthropics/codexa/issues)
-2. Search [GitHub Discussions](https://github.com/anthropics/codexa/discussions)
-3. [Open a new issue](https://github.com/anthropics/codexa/issues/new) with:
+1. Check [GitHub Issues](https://github.com/sayam-1705/codexa/issues)
+2. Search [GitHub Discussions](https://github.com/sayam-1705/codexa/discussions)
+3. [Open a new issue](https://github.com/sayam-1705/codexa/issues/new) with:
    - `codexa --version` output
    - Your config (redact sensitive data)
    - Exact error message

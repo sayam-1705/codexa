@@ -247,5 +247,5 @@ describe('Go Adapter', () => {
 
 ## Getting Help
 
-- Ask in [GitHub Discussions](https://github.com/anthropics/codexa/discussions)
+- Ask in [GitHub Discussions](https://github.com/sayam-1705/codexa/discussions)
 - See [cli-reference.md](./cli-reference.md#codexa-add-language--package-) for installation docs

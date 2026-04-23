@@ -33,7 +33,7 @@ export function getBadgeInstallInstructions() {
 Paste this into your README.md to show your code quality status:
 
 \`\`\`markdown
-[![Codexa](https://img.shields.io/badge/codexa-clean-00E5A0)](https://github.com/anthropics/codexa)
+[![Codexa](https://img.shields.io/badge/codexa-clean-00E5A0)](https://github.com/sayam-1705/codexa)
 \`\`\`
 
 The badge updates on every commit. Replace the URL with your repository if desired.

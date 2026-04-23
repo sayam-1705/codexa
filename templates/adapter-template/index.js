@@ -4,7 +4,7 @@
  * This is a template for creating custom language adapters for Codexa.
  * Copy this template to build an adapter for your language of choice.
  *
- * See: https://github.com/anthropics/codexa/wiki/Writing-Adapters
+ * See: https://github.com/sayam-1705/codexa
  */
 
 // Import Codexa utilities to use in your adapter

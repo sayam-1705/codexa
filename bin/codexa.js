@@ -57,7 +57,7 @@ function printHelp() {
   console.log('  -h, --help                Show help');
   console.log('');
   console.log('Docs: https://codexa.dev/docs');
-  console.log('Issues: https://github.com/your-org/codexa/issues');
+  console.log('Issues: https://github.com/sayam-1705/codexa/issues');
 }
 
 const rawArgs = process.argv.slice(2);

@@ -5,7 +5,7 @@ Thanks for contributing to Codexa.
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/codexa
+git clone https://github.com/sayam-1705/codexa.git
 cd codexa
 npm install
 ```

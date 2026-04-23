@@ -15,7 +15,7 @@ const adapter = {
   extensions: ['.py', '.pyw', '.pyi'],
   linter: 'ruff',
   license: 'MIT',
-  homepage: 'https://github.com/anthropics/codexa',
+  homepage: 'https://github.com/sayam-1705/codexa',
 
   /**
    * Detect if repository contains Python

@@ -1,15 +1,27 @@
-# Contributing to Codexa
+# Contributing
 
 Thanks for contributing to Codexa.
 
-## Development Setup
+## Setup
 
 ```bash
-git clone https://github.com/your-org/codexa.git
+git clone https://github.com/YOUR_USERNAME/codexa
 cd codexa
 npm install
+```
+
+## Running Tests
+
+```bash
 npm test
-node ./bin/codexa.js init
+```
+
+You can also run targeted Vitest commands during development:
+
+```bash
+vitest run
+vitest --watch
+vitest run tests/config.test.js
 ```
 
 ## Project Structure Overview
@@ -34,29 +46,21 @@ src/solo contains local analytics (streaks, trends, digest) for individual devel
 
 src/team contains team analytics, CI payload shaping, dashboards, badges, and hotspot modeling.
 
-## Running Tests
-
-```bash
-vitest run
-vitest --watch
-vitest run tests/config.test.js
-```
-
-All tests must pass before opening a pull request.
-
-## Adding a Language Adapter
-
-- Read [docs/plugin-authoring.md](./docs/plugin-authoring.md)
-- Start from [templates/adapter-template/](./templates/adapter-template/)
-- Publish as codexa-adapter-<language>
-- Open a PR to list the adapter in the community registry
-
 ## Pull Request Process
 
-1. Branch naming: use prefixes like feat/, fix/, docs/, refactor/, test/.
-2. Commit message format: Conventional Commits (for example: fix(init): improve demo step output).
-3. Required checks: all tests pass and no regression in command behavior.
-4. Dependencies: do not add new dependencies without prior discussion in issue/discussion.
+1. Fork the repo
+2. Create a branch: `git checkout -b feat/your-feature`
+3. Commit with conventional commits: `feat: add X`
+4. Push and open a PR against `main`
+5. Ensure CI passes
+
+All tests must pass before opening a pull request. If your change affects behavior, make sure command flows and CI checks still work as expected.
+
+## Writing a Language Adapter
+
+See [docs/plugin-authoring.md](./docs/plugin-authoring.md)
+
+You can also start from [templates/adapter-template/](./templates/adapter-template/) and publish adapters as `codexa-adapter-<language>`.
 
 ## Code Style
 

@@ -1,0 +1,24 @@
+name: Bug report
+
+description: Something not working
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+
+  - type: textarea
+    id: version
+    attributes:
+      label: codexa --version output
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Your codexa.config.json (redact secrets)
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce

@@ -1,61 +1,141 @@
+---
+const featureGroups = [
+  {
+    title: 'Blame-aware by default',
+    body:
+      'Codexa classifies issues against the lines in your diff so teams can keep moving even when a repo still carries older lint debt.',
+  },
+  {
+    title: 'Interactive fix loop',
+    body:
+      'Use the terminal UI to inspect issues, apply supported fixes, and rerun checks without leaving the commit flow.',
+  },
+  {
+    title: 'Solo and team workflows',
+    body:
+      'Start in a single repository, then share policy with codexa.config.json, CI checks, dashboards, and reporting as adoption grows.',
+  },
+  {
+    title: 'Local AI suggestions',
+    body:
+      'When Ollama is available, Codexa can suggest fixes locally so teams can keep sensitive code and review context on their own machines.',
+  },
+  {
+    title: 'Built-in language support',
+    body:
+      'JavaScript, TypeScript, and Python are supported today, with an adapter model for expanding into more ecosystems over time.',
+  },
+  {
+    title: 'Learning + history',
+    body:
+      'Codexa keeps track of accepted fixes and run history so repeat issues become easier to understand and future workflows become more informed.',
+  },
+];
+
+const comparison = [
+  ['Primary use case', 'Personal commit hygiene and local trends', 'Shared policies, CI checks, and code quality visibility'],
+  ['Setup command', 'codexa init', 'codexa config init --team, then codexa init'],
+  ['Quality checks', 'Blame-aware commit checks', 'Blame-aware checks with CI enforcement options'],
+  ['Reporting', 'history, report, and stats commands', 'dashboard plus team-oriented reporting'],
+  ['Configuration', 'Local repo defaults', 'Repository-wide config files committed for teammates'],
+  ['Extensibility', 'Adapters and optional Ollama assistance', 'Same adapter model with shared adoption across repos'],
+];
+---
+
 <section class="section">
-  <h2>Three Core Features</h2>
-  <div class="grid">
-    <article class="card item">
-      <h3>Blame-Aware</h3>
-      <p>Only your errors block commits. Pre-existing issues are shown separately and never in your way.</p>
-    </article>
-    <article class="card item">
-      <h3>Auto-Fix</h3>
-      <p>Press [x] to fix applicable errors instantly. No more --no-verify shortcuts.</p>
-    </article>
-    <article class="card item">
-      <h3>Learns</h3>
-      <p>.codexa/patterns.json remembers accepted fixes and prioritizes your past fixes first.</p>
-    </article>
+  <div class="sectionHead">
+    <p class="kicker mono">Core capabilities</p>
+    <h2>Everything the homepage should answer at a glance.</h2>
   </div>
 
-  <h2 class="comparisonTitle">Solo vs Team</h2>
-  <div class="card tableWrap">
-    <table>
-      <thead><tr><th>Feature</th><th>Solo</th><th>Team</th></tr></thead>
-      <tbody>
-        <tr><td>Blame-aware linting</td><td>Y</td><td>Y</td></tr>
-        <tr><td>Interactive TUI</td><td>Y</td><td>Y</td></tr>
-        <tr><td>Auto-fix [x]</td><td>Y</td><td>Y</td></tr>
-        <tr><td>AI suggestions (Ollama)</td><td>Y</td><td>Y</td></tr>
-        <tr><td>.codexa/ learning folder</td><td>Y</td><td>Y (shared)</td></tr>
-        <tr><td>Clean commit streak</td><td>Y</td><td>-</td></tr>
-        <tr><td>codexa report + sparklines</td><td>Y</td><td>-</td></tr>
-        <tr><td>Weekly digest</td><td>Y</td><td>-</td></tr>
-        <tr><td>Shared team config</td><td>-</td><td>Y</td></tr>
-        <tr><td>GitHub Actions CI</td><td>-</td><td>Y</td></tr>
-        <tr><td>Team dashboard</td><td>-</td><td>Y</td></tr>
-        <tr><td>Hotspot detection</td><td>-</td><td>Y</td></tr>
-        <tr><td>Plugin system</td><td>Y</td><td>Y</td></tr>
-      </tbody>
-    </table>
+  <div class="grid">
+    {featureGroups.map((feature) => (
+      <article class="card item">
+        <h3>{feature.title}</h3>
+        <p>{feature.body}</p>
+      </article>
+    ))}
+  </div>
+
+  <div class="comparisonWrap">
+    <div>
+      <p class="kicker mono">How it scales</p>
+      <h2 class="comparisonTitle">Start solo, then tighten the loop for your team.</h2>
+    </div>
+
+    <div class="card tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Solo usage</th>
+            <th>Team usage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {comparison.map((row) => (
+            <tr>
+              <td>{row[0]}</td>
+              <td>{row[1]}</td>
+              <td>{row[2]}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>
 
 <style>
+  .sectionHead {
+    max-width: 56ch;
+    margin-bottom: 18px;
+  }
+
+  .sectionHead h2,
+  .comparisonTitle {
+    margin: 0;
+  }
+
+  .kicker {
+    margin: 0 0 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+  }
+
   .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
   }
 
   .item {
-    padding: 14px;
+    padding: 18px;
+    min-height: 170px;
+    background: rgba(10, 14, 28, 0.82);
   }
 
-  .comparisonTitle {
-    margin-top: 30px;
+  .item h3 {
+    margin: 0 0 8px;
+  }
+
+  .item p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .comparisonWrap {
+    margin-top: 32px;
+    display: grid;
+    gap: 14px;
   }
 
   .tableWrap {
     overflow-x: auto;
-    padding: 8px;
+    padding: 10px;
+    background: rgba(10, 14, 28, 0.84);
   }
 
   table {
@@ -65,12 +145,32 @@
 
   th,
   td {
-    border-bottom: 1px solid rgba(200, 208, 224, 0.18);
-    padding: 9px;
+    border-bottom: 1px solid var(--border);
+    padding: 12px;
     text-align: left;
+    vertical-align: top;
   }
 
-  @media (max-width: 860px) {
+  th {
+    color: var(--text-strong);
+  }
+
+  td {
+    color: var(--muted);
+  }
+
+  td:first-child {
+    color: var(--text-strong);
+    min-width: 180px;
+  }
+
+  @media (max-width: 960px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
     .grid {
       grid-template-columns: 1fr;
     }

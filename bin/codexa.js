@@ -56,7 +56,7 @@ function printHelp() {
   console.log('  -v, --version             Show version');
   console.log('  -h, --help                Show help');
   console.log('');
-  console.log('Docs: https://codexa.dev/docs');
+  console.log('Docs: https://github.com/sayam-1705/codexa/blob/main/docs/README.md');
   console.log('Issues: https://github.com/sayam-1705/codexa/issues');
 }
 

@@ -1,42 +1,97 @@
+---
+const docsUrl = 'https://github.com/sayam-1705/codexa/blob/main/docs/README.md';
+const readmeUrl = 'https://github.com/sayam-1705/codexa#readme';
+const ciUrl = 'https://github.com/sayam-1705/codexa/blob/main/docs/ci-integration.md';
+const npmUrl = 'https://www.npmjs.com/package/codexa-cli';
+
+const facts = [
+  { label: 'Published package', value: 'codexa-cli on npm' },
+  { label: 'CLI command', value: 'codexa' },
+  { label: 'Built-in adapters', value: 'JavaScript and Python today' },
+  { label: 'Optional AI mode', value: 'Local Ollama suggestions' },
+];
+---
+
 <section class="section">
-  <h2>Quick Start</h2>
+  <div class="sectionHead">
+    <p class="kicker mono">Get started</p>
+    <h2>Install it once, then choose the workflow that matches your repo.</h2>
+  </div>
 
   <div class="tabs card">
     <input type="radio" id="solo" name="tab" checked />
     <input type="radio" id="team" name="tab" />
 
     <div class="labels">
-      <label for="solo">Solo</label>
-      <label for="team">Team</label>
+      <label for="solo">Solo repo</label>
+      <label for="team">Team repo</label>
     </div>
 
     <div class="panel solo mono">
-      <pre>npm install -g codexa
+      <pre>npm install -g codexa-cli
 cd your-project
 codexa init
-git add . && git commit -m "first protected commit"</pre>
+git add .
+git commit -m "first protected commit"</pre>
     </div>
 
     <div class="panel team mono">
-      <pre>npm install -g codexa
+      <pre>npm install -g codexa-cli
+cd your-project
 codexa config init --team
 git add codexa.config.json .codexaignore
-git commit -m "add codexa team config"
+git commit -m "chore(codexa): add team policy"
 codexa init</pre>
     </div>
   </div>
 
-  <h2 class="social">Social Proof</h2>
-  <div class="quotes">
-    <article class="card quote">"Placeholder testimonial from team lead."</article>
-    <article class="card quote">"Placeholder testimonial from contributor."</article>
-    <article class="card quote">"Placeholder testimonial from OSS maintainer."</article>
+  <div class="infoGrid">
+    <article class="card facts">
+      <h3>Product facts</h3>
+      <ul>
+        {facts.map((fact) => (
+          <li>
+            <span>{fact.label}</span>
+            <strong>{fact.value}</strong>
+          </li>
+        ))}
+      </ul>
+    </article>
+
+    <article class="card resources">
+      <h3>Useful entry points</h3>
+      <p>Use the repo docs as the current source of truth while the landing site stays focused on overview and adoption.</p>
+      <div class="links">
+        <a href={docsUrl}>Documentation index</a>
+        <a href={readmeUrl}>README overview</a>
+        <a href={ciUrl}>CI integration guide</a>
+        <a href={npmUrl}>npm package page</a>
+      </div>
+    </article>
   </div>
 </section>
 
 <style>
+  .sectionHead {
+    max-width: 56ch;
+    margin-bottom: 18px;
+  }
+
+  .sectionHead h2 {
+    margin: 0;
+  }
+
+  .kicker {
+    margin: 0 0 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+  }
+
   .tabs {
-    padding: 12px;
+    padding: 14px;
+    background: rgba(10, 14, 28, 0.84);
   }
 
   .tabs input {
@@ -47,23 +102,30 @@ codexa init</pre>
 
   .labels {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
 
   .labels label {
-    border: 1px solid rgba(200, 208, 224, 0.25);
+    border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 7px 11px;
+    padding: 8px 12px;
     cursor: pointer;
+    transition: transform 140ms ease, border-color 140ms ease;
+  }
+
+  .labels label:hover {
+    transform: translateY(-1px);
+    border-color: var(--border-strong);
   }
 
   .panel {
     display: none;
-    border: 1px solid rgba(200, 208, 224, 0.2);
-    border-radius: 10px;
-    padding: 10px;
-    background: #090916;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    background: rgba(6, 9, 20, 0.94);
   }
 
   #solo:checked ~ .panel.solo,
@@ -74,34 +136,97 @@ codexa init</pre>
   #solo:checked ~ .labels label[for="solo"],
   #team:checked ~ .labels label[for="team"] {
     border-color: transparent;
-    background: var(--green);
-    color: #03150f;
-    font-weight: 600;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    color: #1a1308;
+    font-weight: 700;
   }
 
   pre {
     margin: 0;
     white-space: pre-wrap;
+    color: var(--text-strong);
   }
 
-  .social {
-    margin-top: 28px;
-  }
-
-  .quotes {
+  .infoGrid {
+    margin-top: 14px;
     display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 
-  .quote {
-    padding: 12px;
+  .facts,
+  .resources {
+    padding: 18px;
+    background: rgba(10, 14, 28, 0.82);
+  }
+
+  .facts h3,
+  .resources h3 {
+    margin: 0 0 12px;
+  }
+
+  .facts ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+
+  .facts li {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
     color: var(--muted);
   }
 
+  .facts li:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .facts strong {
+    color: var(--text-strong);
+    text-align: right;
+  }
+
+  .resources p {
+    margin: 0 0 14px;
+    color: var(--muted);
+  }
+
+  .links {
+    display: grid;
+    gap: 10px;
+  }
+
+  .links a {
+    text-decoration: none;
+    color: var(--text-strong);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .links a:hover {
+    border-color: var(--border-strong);
+  }
+
   @media (max-width: 860px) {
-    .quotes {
+    .infoGrid {
       grid-template-columns: 1fr;
+    }
+
+    .facts li {
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .facts strong {
+      text-align: left;
     }
   }
 </style>

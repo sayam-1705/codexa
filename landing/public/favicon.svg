@@ -1,4 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Codexa">
-  <rect width="64" height="64" rx="12" fill="#080810"/>
-  <path d="M16 16h32v8H16zm0 16h32v8H16zm0 16h24v8H16z" fill="#00E5A0"/>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a120a" />
+      <stop offset="100%" stop-color="#080b14" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#ffd166" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)" />
+  <path d="M17 18h30l-5 7H22v14h18l-5 7H22v-2H17z" fill="url(#accent)" />
+  <circle cx="47" cy="45" r="4" fill="#7ce1b5" />
 </svg>

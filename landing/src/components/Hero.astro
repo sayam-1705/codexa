@@ -1,19 +1,44 @@
+---
+const npmUrl = 'https://www.npmjs.com/package/codexa-cli';
+const githubUrl = 'https://github.com/sayam-1705/codexa';
+const docsUrl = 'https://github.com/sayam-1705/codexa/blob/main/docs/README.md';
+---
+
 <section class="section hero">
-  <p class="eyebrow mono">CODEXA v1.0.0</p>
-  <h1>The pre-commit tool that has your back.</h1>
-  <p class="sub">
-    Blame-aware linting. One-keypress fixes. Learns your codebase. Never nags you about errors you did not write.
-  </p>
+  <div class="copy">
+    <p class="eyebrow mono">PUBLISHED ON NPM - CODEXA CLI v1.0.0</p>
+    <h1>Pre-commit guardrails that focus on the code you actually changed.</h1>
+    <p class="sub">
+      Codexa helps teams ship cleaner commits without punishing them for legacy noise. Run blame-aware
+      checks, review issues in an interactive terminal UI, apply fast fixes, and keep your quality workflow
+      local-first with optional Ollama suggestions.
+    </p>
 
-  <div class="install card">
-    <code id="installCmd">npm install -g codexa</code>
-    <button type="button" id="copyInstall">Copy</button>
+    <div class="install card">
+      <code id="installCmd">npm install -g codexa-cli</code>
+      <button type="button" id="copyInstall">Copy</button>
+    </div>
+
+    <div class="actions">
+      <a class="btn primary" href={npmUrl}>Install from npm</a>
+      <a class="btn" href={githubUrl}>View on GitHub</a>
+      <a class="btn ghost" href={docsUrl}>Read the docs</a>
+    </div>
   </div>
 
-  <div class="actions">
-    <a class="btn primary" href="/docs">Get Started</a>
-    <a class="btn" href="https://github.com/sayam-1705/codexa">View on GitHub</a>
-  </div>
+  <aside class="heroCard card">
+    <p class="label mono">Why teams pick Codexa</p>
+    <ul>
+      <li>Blocks issues introduced in your diff instead of inherited debt.</li>
+      <li>Supports JavaScript, TypeScript, and Python out of the box.</li>
+      <li>Works in local commits, team config flows, and GitHub Actions CI.</li>
+      <li>Exposes adapter hooks so you can extend it for more languages.</li>
+    </ul>
+    <div class="meta">
+      <span>CLI command: <code>codexa</code></span>
+      <span>Package: <code>codexa-cli</code></span>
+    </div>
+  </aside>
 </section>
 
 <script>
@@ -21,7 +46,7 @@
   const installCmd = document.getElementById('installCmd');
   if (copyBtn && installCmd && navigator.clipboard) {
     copyBtn.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(installCmd.textContent || 'npm install -g codexa');
+      await navigator.clipboard.writeText(installCmd.textContent || 'npm install -g codexa-cli');
       copyBtn.textContent = 'Copied';
       setTimeout(() => {
         copyBtn.textContent = 'Copy';
@@ -31,43 +56,64 @@
 </script>
 
 <style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+    gap: 24px;
+    align-items: end;
+    padding-top: 32px;
+  }
+
   .hero h1 {
-    margin: 0 0 10px;
-    font-size: clamp(2rem, 5vw, 3.4rem);
-    line-height: 1.1;
+    margin: 0 0 14px;
+    font-size: clamp(2.6rem, 6vw, 5rem);
+    line-height: 0.98;
+    max-width: 12ch;
+    letter-spacing: -0.04em;
   }
 
   .sub {
-    max-width: 70ch;
+    max-width: 64ch;
+    margin: 0;
     color: var(--muted);
+    font-size: 1.05rem;
   }
 
   .eyebrow {
-    color: var(--green);
-    letter-spacing: 0.08em;
-    font-size: 0.86rem;
+    margin: 0 0 14px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    font-size: 0.82rem;
   }
 
   .install {
-    margin-top: 20px;
+    margin-top: 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 14px;
-    gap: 10px;
+    padding: 14px 16px;
+    gap: 12px;
+    background: rgba(8, 12, 26, 0.82);
   }
 
   .install code {
-    font-size: 0.96rem;
+    overflow-wrap: anywhere;
+    color: var(--text-strong);
   }
 
   .install button {
-    border: 1px solid rgba(200, 208, 224, 0.2);
-    border-radius: 8px;
-    background: #15152a;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text);
-    padding: 8px 10px;
+    padding: 8px 14px;
     cursor: pointer;
+    transition: transform 140ms ease, border-color 140ms ease;
+  }
+
+  .install button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.35);
   }
 
   .actions {
@@ -78,17 +124,70 @@
   }
 
   .btn {
-    border: 1px solid rgba(200, 208, 224, 0.25);
+    border: 1px solid var(--border);
     color: var(--text);
     text-decoration: none;
-    border-radius: 10px;
-    padding: 11px 14px;
+    border-radius: 999px;
+    padding: 11px 16px;
+    transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--border-strong);
   }
 
   .btn.primary {
-    background: var(--green);
-    color: #03150f;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    color: #1a1308;
     border-color: transparent;
-    font-weight: 600;
+    font-weight: 700;
+  }
+
+  .btn.ghost {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .heroCard {
+    padding: 22px;
+    background:
+      radial-gradient(circle at top right, rgba(251, 191, 36, 0.15), transparent 34%),
+      rgba(10, 14, 28, 0.88);
+  }
+
+  .label {
+    margin: 0 0 16px;
+    color: var(--muted-strong);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .heroCard ul {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 10px;
+    color: var(--text-strong);
+  }
+
+  .meta {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: grid;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+
+    .hero h1 {
+      max-width: 14ch;
+    }
   }
 </style>

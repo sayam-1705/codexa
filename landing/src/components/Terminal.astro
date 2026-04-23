@@ -1,52 +1,89 @@
 <section class="section">
-  <h2>Terminal Demo</h2>
+  <div class="sectionHead">
+    <p class="kicker mono">Interactive flow</p>
+    <h2>From first setup to a clean commit in one terminal workflow.</h2>
+    <p>
+      Codexa is built for the place where quality checks usually break momentum: right before commit. The
+      CLI installs into your repo, inspects staged files, separates pre-existing debt, and keeps the fix loop
+      inside the terminal.
+    </p>
+  </div>
+
   <div class="terminal card mono" aria-label="Codexa terminal demo">
-    <p><span class="prompt">$</span> codexa check</p>
-    <p class="line line1">Scanning staged files...</p>
-    <p class="line line2">[MODERATE] src/auth.ts:32 no-unused-vars</p>
-    <p class="line line3">Press <strong>[x]</strong> to apply fix</p>
-    <p class="line line4">Fix applied. Re-running checks...</p>
-    <p class="line line5">Clean. Commit allowed.</p>
+    <p><span class="prompt">$</span> npm install -g codexa-cli</p>
+    <p class="line line1"><span class="prompt">$</span> codexa init</p>
+    <p class="line line2">Created codexa.config.json</p>
+    <p class="line line3">Installed pre-commit hook</p>
+    <p class="line line4"><span class="prompt">$</span> git commit -m "ship auth cleanup"</p>
+    <p class="line line5">[MODERATE] src/auth.ts:32 no-unused-vars</p>
+    <p class="line line6">Press <strong>[x]</strong> to apply fix or <strong>[n]</strong> to ask Ollama</p>
+    <p class="line line7">Fix applied. Re-running checks...</p>
+    <p class="line line8 ok">Clean. Commit allowed.</p>
   </div>
 </section>
 
 <style>
-  h2 {
-    margin-bottom: 12px;
+  .sectionHead {
+    max-width: 64ch;
+    margin-bottom: 16px;
+  }
+
+  .sectionHead h2 {
+    margin: 0 0 10px;
+  }
+
+  .sectionHead p:last-child {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .kicker {
+    margin: 0 0 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
   }
 
   .terminal {
-    padding: 16px;
-    min-height: 210px;
+    padding: 22px;
+    min-height: 284px;
     overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 24%),
+      rgba(8, 12, 26, 0.92);
   }
 
   .terminal p {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
   }
 
   .prompt {
-    color: var(--green);
+    color: var(--accent);
     margin-right: 8px;
   }
 
   .line {
     opacity: 0;
     transform: translateY(4px);
-    animation: reveal 6s infinite;
+    animation: reveal 9.6s infinite;
   }
 
-  .line1 { animation-delay: 0.4s; }
-  .line2 { animation-delay: 1.3s; color: #ffd27a; }
-  .line3 { animation-delay: 2.2s; }
-  .line4 { animation-delay: 3.1s; color: var(--orange); }
-  .line5 { animation-delay: 4.1s; color: var(--green); }
+  .line1 { animation-delay: 0.5s; }
+  .line2 { animation-delay: 1.4s; color: var(--accent-strong); }
+  .line3 { animation-delay: 2.3s; color: var(--accent-strong); }
+  .line4 { animation-delay: 3.2s; }
+  .line5 { animation-delay: 4.3s; color: var(--warning); }
+  .line6 { animation-delay: 5.2s; color: var(--text-strong); }
+  .line7 { animation-delay: 6.3s; color: var(--highlight); }
+  .line8 { animation-delay: 7.4s; }
+  .ok { color: var(--success); }
 
   @keyframes reveal {
     0% { opacity: 0; transform: translateY(4px); }
     8% { opacity: 1; transform: translateY(0); }
-    30% { opacity: 1; }
-    40% { opacity: 0; }
+    22% { opacity: 1; }
+    30% { opacity: 0; }
     100% { opacity: 0; }
   }
 </style>

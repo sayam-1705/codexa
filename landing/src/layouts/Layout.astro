@@ -1,5 +1,9 @@
 ---
-const { title = 'Codexa' } = Astro.props;
+const {
+  title = 'Codexa | Blame-aware pre-commit guardian',
+  description = 'Codexa is a published npm CLI for blame-aware commit checks, interactive fixes, team policy, and optional local Ollama suggestions.',
+} = Astro.props;
+const pageUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://codexa.dev').toString();
 ---
 <!doctype html>
 <html lang="en">
@@ -7,63 +11,126 @@ const { title = 'Codexa' } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f59e0b" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={pageUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <link rel="canonical" href={pageUrl} />
     <link rel="icon" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
-        --green: #00e5a0;
-        --orange: #ff5c35;
-        --bg: #080810;
-        --surface: #0d0d1a;
-        --text: #c8d0e0;
-        --muted: #9ba6bd;
+        --bg: #110c07;
+        --bg-soft: #1c140d;
+        --surface: rgba(23, 17, 10, 0.7);
+        --surface-strong: rgba(12, 16, 29, 0.9);
+        --text: #f4ecde;
+        --text-strong: #fff7eb;
+        --muted: #d8c4a8;
+        --muted-strong: #efd7b4;
+        --accent: #f59e0b;
+        --accent-strong: #ffd166;
+        --success: #7ce1b5;
+        --warning: #ffd28a;
+        --highlight: #9dc2ff;
+        --border: rgba(255, 232, 200, 0.14);
+        --border-strong: rgba(255, 232, 200, 0.28);
       }
 
       * {
         box-sizing: border-box;
       }
 
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         margin: 0;
         color: var(--text);
         background:
-          radial-gradient(circle at 10% 10%, rgba(0, 229, 160, 0.12), transparent 30%),
-          radial-gradient(circle at 90% 0%, rgba(255, 92, 53, 0.12), transparent 28%),
-          var(--bg);
-        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+          radial-gradient(circle at top left, rgba(245, 158, 11, 0.22), transparent 28%),
+          radial-gradient(circle at 86% 6%, rgba(125, 211, 252, 0.14), transparent 24%),
+          linear-gradient(180deg, #140e08 0%, #090b12 52%, #07080e 100%);
+        font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 78%);
       }
 
       .shell {
-        max-width: 1100px;
+        max-width: 1180px;
         margin: 0 auto;
-        padding: 24px;
+        padding: 32px 24px 56px;
       }
 
       .section {
-        margin: 48px 0;
+        margin: 56px 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        color: var(--text-strong);
+        font-weight: 700;
+      }
+
+      h2 {
+        font-size: clamp(1.8rem, 3.6vw, 3rem);
+        line-height: 1.02;
+        letter-spacing: -0.03em;
+      }
+
+      p {
+        line-height: 1.65;
       }
 
       code,
       pre,
       .mono {
-        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
       }
 
       .card {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent), var(--surface);
-        border: 1px solid rgba(200, 208, 224, 0.15);
-        border-radius: 14px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28%),
+          var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.24);
+        backdrop-filter: blur(10px);
       }
 
       a {
-        color: var(--green);
+        color: var(--accent-strong);
       }
 
       @media (max-width: 760px) {
         .shell {
-          padding: 18px;
+          padding: 18px 16px 42px;
+        }
+
+        .section {
+          margin: 42px 0;
         }
       }
     </style>

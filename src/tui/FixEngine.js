@@ -2,6 +2,26 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 import { resolve, dirname } from 'path';
 
+function getEslintOptions(rule = null, fix = false) {
+  const rules = rule ? { [rule]: 'error' } : {};
+
+  return {
+    fix,
+    useEslintrc: false,
+    baseConfig: {
+      env: {
+        es2022: true,
+        node: true,
+      },
+      parserOptions: {
+        sourceType: 'module',
+        ecmaVersion: 2022,
+      },
+      rules,
+    },
+  };
+}
+
 /**
  * Applies auto-fix for ESLint or ruff issues.
  * @param {Object} error - Error object with file, rule, language properties
@@ -46,14 +66,7 @@ async function fixWithEslint(error) {
     const filePath = error.file;
     const before = readFileSync(filePath, 'utf8');
 
-    const eslint = new ESLint({
-      fix: true,
-      overrideConfig: {
-        rules: {
-          [error.rule]: 'error',
-        },
-      },
-    });
+    const eslint = new ESLint(getEslintOptions(error.rule, true));
 
     const results = await eslint.lintFiles([filePath]);
 
@@ -164,7 +177,7 @@ export async function relintFile(filePath, language) {
   try {
     if (language === 'javascript' || language === 'typescript') {
       const { ESLint } = await import('eslint');
-      const eslint = new ESLint();
+      const eslint = new ESLint(getEslintOptions());
       const results = await eslint.lintFiles([filePath]);
       return results[0]?.messages || [];
     } else if (language === 'python') {

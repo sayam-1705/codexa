@@ -20,25 +20,15 @@ function mapSeverity(ruleId) {
   return RULE_SEVERITY[ruleId] || SEVERITIES.MINOR;
 }
 
-export async function lintJavaScript(files) {
-  if (!files.length) {
-    return [];
-  }
-
-  const jsFiles = files.filter(f => {
-    const ext = f.slice(f.lastIndexOf('.'));
-    return ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.d.ts'].includes(ext);
-  });
-
-  if (!jsFiles.length) {
-    return [];
-  }
-
-  // ESLint v9 with override config
-  const eslint = new ESLint({
-    overrideConfigFile: true,
+function createEslint() {
+  return new ESLint({
+    useEslintrc: false,
     baseConfig: {
-      languageOptions: {
+      env: {
+        es2022: true,
+        node: true,
+      },
+      parserOptions: {
         sourceType: 'module',
         ecmaVersion: 2022,
       },
@@ -54,6 +44,23 @@ export async function lintJavaScript(files) {
       },
     },
   });
+}
+
+export async function lintJavaScript(files) {
+  if (!files.length) {
+    return [];
+  }
+
+  const jsFiles = files.filter(f => {
+    const ext = f.slice(f.lastIndexOf('.'));
+    return ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.d.ts'].includes(ext);
+  });
+
+  if (!jsFiles.length) {
+    return [];
+  }
+
+  const eslint = createEslint();
 
   const results = await eslint.lintFiles(jsFiles);
   const errors = [];

@@ -14,7 +14,7 @@ const adapter = {
   language: 'javascript',
   version: '0.1.0',
   extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.d.ts'],
-  linter: 'ESLint 9',
+  linter: 'ESLint 8',
   license: 'MIT',
   homepage: 'https://github.com/anthropics/codexa',
 

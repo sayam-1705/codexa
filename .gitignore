@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+landing/node_modules/
+
+# Build outputs
+coverage/
+.nyc_output/
+dist/
+build/
+.astro/
+landing/dist/
+landing/.astro/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local databases and generated data
+*.sqlite
+*.db
+*.db-*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+*.tmp
+*.temp
+.cache/

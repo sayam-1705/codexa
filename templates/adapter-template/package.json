@@ -1,0 +1,16 @@
+{
+  "name": "codexa-adapter-mylang",
+  "version": "0.1.0",
+  "description": "MyLanguage adapter for Codexa",
+  "type": "module",
+  "main": "index.js",
+  "keywords": ["codexa", "codexa-adapter", "mylang"],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "codexa": ">=0.1.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
+  }
+}

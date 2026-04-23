@@ -1,0 +1,24 @@
+diff --git a/src/auth.ts b/src/auth.ts
+index a1b2c3d..e4f5g6h 100644
+--- a/src/auth.ts
++++ b/src/auth.ts
+@@ -12,3 +12,7 @@ export function login(user) {
+   const token = getToken();
++  const session = createSession(user);
++  if (!session) {
++    throw new Error('session failed');
++  }
+   return token;
+@@ -45,2 +49,1 @@ export function logout() {
+-  clearTokens();
+-  clearSession();
++  clearAll();
+diff --git a/src/utils.ts b/src/utils.ts
+index 1234567..abcdefg 100644
+--- a/src/utils.ts
++++ b/src/utils.ts
+@@ -30,1 +30,3 @@ export function format(val) {
+-  return val.toString();
++  const result = val.toString();
++  console.log(result);
++  return result;

@@ -1,0 +1,78 @@
+<section class="section">
+  <h2>Three Core Features</h2>
+  <div class="grid">
+    <article class="card item">
+      <h3>Blame-Aware</h3>
+      <p>Only your errors block commits. Pre-existing issues are shown separately and never in your way.</p>
+    </article>
+    <article class="card item">
+      <h3>Auto-Fix</h3>
+      <p>Press [x] to fix applicable errors instantly. No more --no-verify shortcuts.</p>
+    </article>
+    <article class="card item">
+      <h3>Learns</h3>
+      <p>.codexa/patterns.json remembers accepted fixes and prioritizes your past fixes first.</p>
+    </article>
+  </div>
+
+  <h2 class="comparisonTitle">Solo vs Team</h2>
+  <div class="card tableWrap">
+    <table>
+      <thead><tr><th>Feature</th><th>Solo</th><th>Team</th></tr></thead>
+      <tbody>
+        <tr><td>Blame-aware linting</td><td>Y</td><td>Y</td></tr>
+        <tr><td>Interactive TUI</td><td>Y</td><td>Y</td></tr>
+        <tr><td>Auto-fix [x]</td><td>Y</td><td>Y</td></tr>
+        <tr><td>AI suggestions (Ollama)</td><td>Y</td><td>Y</td></tr>
+        <tr><td>.codexa/ learning folder</td><td>Y</td><td>Y (shared)</td></tr>
+        <tr><td>Clean commit streak</td><td>Y</td><td>-</td></tr>
+        <tr><td>codexa report + sparklines</td><td>Y</td><td>-</td></tr>
+        <tr><td>Weekly digest</td><td>Y</td><td>-</td></tr>
+        <tr><td>Shared team config</td><td>-</td><td>Y</td></tr>
+        <tr><td>GitHub Actions CI</td><td>-</td><td>Y</td></tr>
+        <tr><td>Team dashboard</td><td>-</td><td>Y</td></tr>
+        <tr><td>Hotspot detection</td><td>-</td><td>Y</td></tr>
+        <tr><td>Plugin system</td><td>Y</td><td>Y</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .item {
+    padding: 14px;
+  }
+
+  .comparisonTitle {
+    margin-top: 30px;
+  }
+
+  .tableWrap {
+    overflow-x: auto;
+    padding: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    border-bottom: 1px solid rgba(200, 208, 224, 0.18);
+    padding: 9px;
+    text-align: left;
+  }
+
+  @media (max-width: 860px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

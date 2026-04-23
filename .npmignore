@@ -1,0 +1,9 @@
+landing/
+docs/
+tests/
+.github/
+*.test.js
+*.test.ts
+vitest.config.*
+.gitignore
+.eslintrc.cjs

@@ -1,0 +1,8 @@
+# Codexa ignore patterns (like .gitignore — committed to repo root)
+
+dist/
+build/
+*.min.js
+*.generated.*
+tests/fixtures/
+src/legacy/

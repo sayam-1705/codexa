@@ -1,0 +1,76 @@
+---
+const { title = 'Codexa' } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --green: #00e5a0;
+        --orange: #ff5c35;
+        --bg: #080810;
+        --surface: #0d0d1a;
+        --text: #c8d0e0;
+        --muted: #9ba6bd;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 10% 10%, rgba(0, 229, 160, 0.12), transparent 30%),
+          radial-gradient(circle at 90% 0%, rgba(255, 92, 53, 0.12), transparent 28%),
+          var(--bg);
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+
+      .shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .section {
+        margin: 48px 0;
+      }
+
+      code,
+      pre,
+      .mono {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .card {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent), var(--surface);
+        border: 1px solid rgba(200, 208, 224, 0.15);
+        border-radius: 14px;
+      }
+
+      a {
+        color: var(--green);
+      }
+
+      @media (max-width: 760px) {
+        .shell {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <slot />
+    </main>
+  </body>
+</html>

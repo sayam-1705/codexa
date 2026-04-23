@@ -1,0 +1,94 @@
+<section class="section hero">
+  <p class="eyebrow mono">CODEXA v1.0.0</p>
+  <h1>The pre-commit tool that has your back.</h1>
+  <p class="sub">
+    Blame-aware linting. One-keypress fixes. Learns your codebase. Never nags you about errors you did not write.
+  </p>
+
+  <div class="install card">
+    <code id="installCmd">npm install -g codexa</code>
+    <button type="button" id="copyInstall">Copy</button>
+  </div>
+
+  <div class="actions">
+    <a class="btn primary" href="/docs">Get Started</a>
+    <a class="btn" href="https://github.com/your-org/codexa">View on GitHub</a>
+  </div>
+</section>
+
+<script>
+  const copyBtn = document.getElementById('copyInstall');
+  const installCmd = document.getElementById('installCmd');
+  if (copyBtn && installCmd && navigator.clipboard) {
+    copyBtn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(installCmd.textContent || 'npm install -g codexa');
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy';
+      }, 1200);
+    });
+  }
+</script>
+
+<style>
+  .hero h1 {
+    margin: 0 0 10px;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    line-height: 1.1;
+  }
+
+  .sub {
+    max-width: 70ch;
+    color: var(--muted);
+  }
+
+  .eyebrow {
+    color: var(--green);
+    letter-spacing: 0.08em;
+    font-size: 0.86rem;
+  }
+
+  .install {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .install code {
+    font-size: 0.96rem;
+  }
+
+  .install button {
+    border: 1px solid rgba(200, 208, 224, 0.2);
+    border-radius: 8px;
+    background: #15152a;
+    color: var(--text);
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+
+  .actions {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .btn {
+    border: 1px solid rgba(200, 208, 224, 0.25);
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 10px;
+    padding: 11px 14px;
+  }
+
+  .btn.primary {
+    background: var(--green);
+    color: #03150f;
+    border-color: transparent;
+    font-weight: 600;
+  }
+</style>

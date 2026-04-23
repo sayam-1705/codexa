@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 // Mock db module before importing streak
 vi.mock('../src/solo/db.js', () => ({
   getDb: vi.fn(() => ({
-    prepare: (query) => ({
+    prepare: () => ({
       all: () => [],
     }),
   })),

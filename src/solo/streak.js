@@ -77,8 +77,6 @@ export function getBestStreak(repoPath) {
  *   level: "clean" | "hot" | "legendary"
  */
 export function getStreakDisplay(repoPath) {
-  const db = getDb();
-
   // Get current streak
   const currentStreak = getCurrentStreak(repoPath);
 

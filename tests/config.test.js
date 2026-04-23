@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock better-sqlite3 and db module
 vi.mock('../src/solo/db.js', () => ({
@@ -9,7 +9,6 @@ vi.mock('../src/solo/db.js', () => ({
 }));
 
 import { validateConfig, checkVersionCompat, getIgnorePatterns, createDefaultConfig } from '../src/team/config.js';
-import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import os from 'os';
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { writeFileSync, mkdirSync, rmSync } from 'fs';
-import { resolve, sep } from 'path';
+import { resolve } from 'path';
 import os from 'os';
 import jsAdapter from '../src/plugins/adapters/javascript.js';
 import pyAdapter from '../src/plugins/adapters/python.js';

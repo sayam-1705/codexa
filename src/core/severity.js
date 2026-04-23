@@ -116,10 +116,8 @@ export function getSeverity(rule, language) {
     }
 
     // Check for prefix match (e.g., 'prettier/...')
-    for (const [prefix, severity] of Object.entries(PYTHON_RULES[SEVERITIES.MINOR] || {})) {
-      if (rule.startsWith('prettier')) {
-        return SEVERITIES.MINOR; // All prettier rules are minor
-      }
+    if (rule.startsWith('prettier')) {
+      return SEVERITIES.MINOR; // All prettier rules are minor
     }
 
     logUnknownRule(rule, language);

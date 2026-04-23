@@ -9,7 +9,7 @@
 
 // Import Codexa utilities to use in your adapter
 // These are exported from the main codexa package
-import { createError, SEVERITIES } from 'codexa/schema';
+import { createError } from 'codexa/schema';
 import { execSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
@@ -87,7 +87,7 @@ const MyLanguageAdapter = {
    * @param {Object} config - Codexa config object
    * @returns {Promise<Object[]>} - Array of Codexa error objects
    */
-  async lint(files, config) {
+  async lint(files) {
     // Filter to files your adapter handles
     const myFiles = files.filter((f) =>
       MyLanguageAdapter.extensions.some((ext) => f.endsWith(ext))
@@ -148,7 +148,7 @@ const MyLanguageAdapter = {
    * @param {Object} config - Codexa config object
    * @returns {Promise<FixResult>}
    */
-  async fix(file, rule, config) {
+  async fix(file, rule) {
     // Example: if your linter supports --fix
     try {
       const before = readFileSync(file, 'utf8');

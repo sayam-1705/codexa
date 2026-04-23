@@ -80,7 +80,7 @@ function saveRegistry(registry) {
  * @param {string} repoPath - Repository path (for detect() calls)
  * @returns {Promise<Object[]>} - Array of loaded, wrapped adapters
  */
-export async function getEnabledAdapters(repoPath) {
+export async function getEnabledAdapters() {
   const registry = loadRegistry();
   const enabledEntries = registry.adapters.filter((a) => a.enabled !== false);
 

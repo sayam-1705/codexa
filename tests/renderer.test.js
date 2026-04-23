@@ -1,7 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
 // Mock console and process
 const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});

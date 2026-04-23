@@ -55,7 +55,7 @@ const adapter = {
    * Lint JavaScript/TypeScript files
    * Filter to supported extensions and delegate to lintJavaScript
    */
-  async lint(files, config) {
+  async lint(files) {
     // Filter to supported extensions
     const jsFiles = files.filter((f) =>
       adapter.extensions.some((ext) => f.endsWith(ext))
@@ -73,7 +73,7 @@ const adapter = {
    * Auto-fix a JavaScript linting error
    * Delegate to FixEngine
    */
-  async fix(file, rule, config) {
+  async fix(file, rule) {
     // Build a minimal error object
     const error = {
       file,

@@ -49,7 +49,7 @@ const adapter = {
    * Lint Python files
    * Filter to .py files and delegate to lintPython
    */
-  async lint(files, config) {
+  async lint(files) {
     // Filter to Python files
     const pyFiles = files.filter((f) =>
       adapter.extensions.some((ext) => f.endsWith(ext))
@@ -67,7 +67,7 @@ const adapter = {
    * Auto-fix a Python linting error
    * Currently returns not implemented
    */
-  async fix(file, rule, config) {
+  async fix(file, rule) {
     return {
       success: false,
       diff: null,

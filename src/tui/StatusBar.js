@@ -5,7 +5,6 @@ import TextInput from 'ink-text-input';
 
 export default function StatusBar({
   result,
-  selectedIndex,
   isForceMode,
   forceReason,
   onForceReasonChange,

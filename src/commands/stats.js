@@ -1,8 +1,7 @@
 import { getLifetimeStats, getErrorFrequency } from '../solo/trends.js';
 import { getStreakData } from '../solo/streak.js';
 import { getImprovementScore, getWeeklySummary } from '../solo/trends.js';
-import { renderGauge, renderBarChart } from '../solo/sparkline.js';
-import { getDb } from '../solo/db.js';
+import { renderGauge } from '../solo/sparkline.js';
 
 /**
  * Generate and print the stats command output.
@@ -12,8 +11,6 @@ export async function statsCommand() {
   const repoPath = process.cwd();
 
   try {
-    const db = getDb();
-
     // Fetch data
     const lifetime = getLifetimeStats(repoPath);
     const topErrors = getErrorFrequency(repoPath, 365); // All time

@@ -67,7 +67,7 @@ export function renderSparkline(values, options = {}) {
  * @returns {string} - Formatted multi-line table
  */
 export function renderSparklineTable(data, options = {}) {
-  const { width = 30, showMinMax = true, showLegend = true } = options;
+  const { width = 30, showMinMax = true } = options;
 
   const lines = [];
 

@@ -1,6 +1,5 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
-import { resolve, dirname } from 'path';
 
 function getEslintOptions(rule = null, fix = false) {
   const rules = rule ? { [rule]: 'error' } : {};

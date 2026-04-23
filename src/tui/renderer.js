@@ -1,4 +1,3 @@
-import { createWriteStream } from 'fs';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';

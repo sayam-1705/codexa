@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as ollama from '../src/ai/ollama.js';
 
 describe('Ollama Client', () => {
@@ -87,4 +87,3 @@ describe('Ollama Client', () => {
     });
   });
 });
-

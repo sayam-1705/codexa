@@ -1,5 +1,5 @@
 import { getSeverity } from './severity.js';
-import { classifyByDiff, buildChangedLinesMap } from './blame.js';
+import { classifyByDiff } from './blame.js';
 import { SEVERITIES, BLAME_CATEGORIES } from './schema.js';
 
 export async function classifyErrors(errors, changedLinesMap, config = {}) {

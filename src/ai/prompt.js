@@ -49,7 +49,7 @@ function getContextLines(error, fileLines) {
 /**
  * Format context with line numbers
  */
-function formatContext(contextLines, errorLine) {
+function formatContext(contextLines) {
   return contextLines
     .map((ctx) => {
       const marker = ctx.isError ? '>' : ' ';

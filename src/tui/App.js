@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import chalk from 'chalk';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { execSync } from 'child_process';
 import IssueList from './IssueList.js';
@@ -12,10 +12,9 @@ import { isOllamaAvailable, getAvailableModels, selectBestModel, streamSuggestio
 import { buildPrompt } from '../ai/prompt.js';
 import { getCachedSuggestion, saveSuggestion } from '../ai/cache.js';
 import { findMatchingPattern } from '../learning/matcher.js';
-import { getPatternsForRule, savePattern, updatePatternUsage } from '../learning/patterns.js';
-import { getStreakDisplay } from '../solo/streak.js';
+import { savePattern } from '../learning/patterns.js';
 
-export default function App({ result, config }) {
+export default function App({ result }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showPreexisting, setShowPreexisting] = useState(false);
   const [fixStatus, setFixStatus] = useState(null);
@@ -317,7 +316,6 @@ export default function App({ result, config }) {
       {/* STATUS BAR */}
       <StatusBar
         result={result}
-        selectedIndex={selectedIndex}
         isForceMode={isForceMode}
         forceReason={forceReason}
         onForceReasonChange={setForceReason}

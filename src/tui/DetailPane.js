@@ -21,7 +21,6 @@ export default function DetailPane({ issue, fixStatus, aiState = null }) {
       const contextLines = lines.slice(contextStart, contextEnd).map((line, idx) => {
         const lineNum = contextStart + idx + 1;
         const isError = lineNum === issue.line;
-        const marker = isError ? '>' : ' ';
         const lineStr = `${String(lineNum).padStart(3)} │ ${line}`;
 
         return {

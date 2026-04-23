@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { loadConfig, validateConfig, createDefaultConfig, getIgnorePatterns } from '../team/config.js';
+import { loadConfig, validateConfig, createDefaultConfig } from '../team/config.js';
 import { writeFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 

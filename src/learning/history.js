@@ -5,7 +5,6 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
-import { tmpdir } from 'os';
 
 const CODEXA_DIR = '.codexa';
 const HISTORY_FILE = 'history.json';

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { resolve } from 'path';
 import os from 'os';
 import { writeFileSync, mkdirSync, rmSync, existsSync } from 'fs';

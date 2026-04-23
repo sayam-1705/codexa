@@ -6,7 +6,7 @@
 
 import { createHash } from 'crypto';
 import { existsSync, readFileSync, writeFileSync, readdirSync, unlinkSync, statSync } from 'fs';
-import { resolve, join } from 'path';
+import { resolve } from 'path';
 import { mkdirSync } from 'fs';
 import { homedir } from 'os';
 

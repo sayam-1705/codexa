@@ -9,7 +9,7 @@
  * @param {Object} config - Config with team.name, ci settings
  * @returns {string} - Complete HTML document
  */
-export function generateHTMLReport(dashboardData, config = {}) {
+export function generateHTMLReport(dashboardData) {
   const {
     teamName = 'Team Code Quality',
     timestamp = new Date().toISOString(),

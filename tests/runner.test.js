@@ -20,7 +20,7 @@ vi.mock('../src/solo/streak.js', () => ({
 
 // Mock the registry and loader to speed up tests
 vi.mock('../src/plugins/registry.js', () => ({
-  getEnabledAdapters: vi.fn(async (repoPath) => {
+  getEnabledAdapters: vi.fn(async () => {
     const jsAdapter = await import('../src/plugins/adapters/javascript.js');
     const pyAdapter = await import('../src/plugins/adapters/python.js');
     return [jsAdapter.default, pyAdapter.default];
@@ -111,4 +111,3 @@ describe('runner', () => {
     { timeout: 10000 }
   );
 });
-

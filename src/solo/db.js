@@ -1,9 +1,6 @@
 import Database from 'better-sqlite3';
 import os from 'os';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Database file at ~/.codexa/history.db
 const DB_PATH = path.join(os.homedir(), '.codexa', 'history.db');

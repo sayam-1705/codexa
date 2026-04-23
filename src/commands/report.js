@@ -1,7 +1,6 @@
 import { getTrendData, getTopRecurringErrors, getErrorBreakdown } from '../solo/trends.js';
 import { getStreakData } from '../solo/streak.js';
-import { renderSparkline, renderBarChart, renderGauge } from '../solo/sparkline.js';
-import { getDb } from '../solo/db.js';
+import { renderSparkline } from '../solo/sparkline.js';
 
 /**
  * Generate and print the report command output.
@@ -12,8 +11,6 @@ export async function reportCommand(options) {
   const days = parseInt(options.days) || 30;
 
   try {
-    const db = getDb();
-
     // Fetch data
     const trend = getTrendData(repoPath, days);
     const topErrors = getTopRecurringErrors(repoPath, 5, days);

@@ -12,7 +12,7 @@ const CODEXA_VERSION = '1.0.0';
  * @param {Object} options - { allFiles, baseBranch, outputFormat }
  */
 export async function runCICheck(repoPath, config, options = {}) {
-  const { allFiles, baseBranch, outputFormat } = options;
+  const { allFiles, baseBranch } = options;
 
   try {
     let stagedFiles = [];

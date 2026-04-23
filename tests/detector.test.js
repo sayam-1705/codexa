@@ -6,7 +6,7 @@ import { tmpdir } from 'os';
 
 // Mock the registry to avoid test isolation issues
 vi.mock('../src/plugins/registry.js', () => ({
-  getEnabledAdapters: vi.fn(async (repoPath) => {
+  getEnabledAdapters: vi.fn(async () => {
     const jsAdapter = await import('../src/plugins/adapters/javascript.js');
     const pyAdapter = await import('../src/plugins/adapters/python.js');
     return [jsAdapter.default, pyAdapter.default];

@@ -1,6 +1,6 @@
 {
   "name": "codexa-cli",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "AI pre-commit guardian. Blame-aware. Auto-fix. Learns.",
   "type": "module",
   "main": "src/index.js",

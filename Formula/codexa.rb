@@ -1,6 +1,6 @@
 class Codexa < Formula
   desc "AI pre-commit guardian with blame-awareness and auto-fix"
-  homepage "https://codexa-toolkit.vercel.app"
+  homepage "codexa-toolkit.vercel.app"
   url "https://github.com/your-org/codexa/archive/refs/tags/v1.0.0.tar.gz"
   sha256 "REPLACE_WITH_RELEASE_TARBALL_SHA256"
   license "MIT"

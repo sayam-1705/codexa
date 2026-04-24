@@ -26,7 +26,7 @@ Technical details:
 Call to action:
 
 ```bash
-npm install -g @codexa/cli
+npm install -g codexa-toolkit
 ```
 
 GitHub: https://github.com/sayam-1705/codexa

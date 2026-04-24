@@ -159,10 +159,10 @@ async fix(file, rule, config) {
 
 ## Error Creation
 
-Import from `@codexa/cli/schema`:
+Import from `codexa-toolkit/schema`:
 
 ```javascript
-import { createError, SEVERITIES } from '@codexa/cli/schema';
+import { createError, SEVERITIES } from 'codexa-toolkit/schema';
 
 const error = createError({
   file: '/path/to/file.go',
@@ -189,11 +189,11 @@ Optional fields: `isInDiff` (default false), `blameCategory` (default 'unknown')
    }
    ```
 
-2. **Dependencies**: Declare `@codexa/cli` as a peer dependency
+2. **Dependencies**: Declare `codexa-toolkit` as a peer dependency
    ```json
    {
      "peerDependencies": {
-       "@codexa/cli": ">=1.0.0"
+       "codexa-toolkit": ">=1.0.0"
      }
    }
    ```

@@ -5,7 +5,7 @@ End-to-end onboarding for team usage.
 ## 1. Team Lead Bootstrap
 
 ```bash
-npm install -g @codexa/cli
+npm install -g codexa-toolkit
 codexa config init --team
 git add codexa.config.json .codexaignore
 git commit -m "chore(codexa): add team policy"
@@ -18,7 +18,7 @@ Add Codexa workflow and set required checks in branch protection.
 ## 3. Contributor Onboarding
 
 ```bash
-npm install -g @codexa/cli
+npm install -g codexa-toolkit
 codexa init
 ```
 

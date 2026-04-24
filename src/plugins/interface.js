@@ -25,7 +25,7 @@
  * @returns {Promise<Object[]>} - Array of CodexaError objects from schema.js
  *
  * Rules:
- * - Every error MUST use createError() from '@codexa/cli/schema'
+ * - Every error MUST use createError() from 'codexa-toolkit/schema'
  * - isInDiff is always false here (blame engine sets it in Phase 2)
  * - MUST handle empty files array — return []
  * - MUST skip unreadable files without crashing

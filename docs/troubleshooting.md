@@ -223,7 +223,7 @@ codexa config set ci.failOn MODERATE
 **Fix**: Add to GitHub Actions workflow
 ```yaml
 - name: Install Codexa
-  run: npm install -g codexa-cli
+  run: npm install -g @codexa/cli
 
 - name: Run Codexa
   run: codexa check --ci
@@ -322,7 +322,7 @@ git diff --cached --name-only | head -5 | xargs codexa check  # (with staged set
 
 ```bash
 # Remove npm package
-npm uninstall -g codexa-cli
+npm uninstall -g @codexa/cli
 
 # Remove config and data (optional)
 rm -rf ~/.codexa

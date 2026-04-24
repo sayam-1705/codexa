@@ -4,7 +4,7 @@
 
 AI pre-commit guardian. Blame-aware. Auto-fix. Learns your codebase.
 
-[![npm version](https://img.shields.io/npm/v/codexa-cli?style=flat&color=00E5A0)](https://www.npmjs.com/package/codexa-cli)
+[![npm version](https://img.shields.io/npm/v/@codexa/cli?style=flat&color=00E5A0)](https://www.npmjs.com/package/@codexa/cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-00E5A0)](./LICENSE)
 [![Node.js >=18](https://img.shields.io/badge/node-%3E%3D18-00E5A0)](https://nodejs.org/en/)
 [![Codexa Health](https://img.shields.io/badge/codexa-clean-00E5A0)](./docs/ci-integration.md)
@@ -23,7 +23,7 @@ Recommended flow: codexa init -> git commit -> TUI -> [x] fix -> clean commit.
 ## Quick Start - Solo
 
 ```bash
-npm install -g codexa-cli
+npm install -g @codexa/cli
 cd your-project
 codexa init
 git add . && git commit -m "first protected commit"
@@ -33,7 +33,7 @@ git add . && git commit -m "first protected commit"
 
 ```bash
 # Each contributor
-npm install -g codexa-cli
+npm install -g @codexa/cli
 
 # Team lead (one time)
 codexa config init --team

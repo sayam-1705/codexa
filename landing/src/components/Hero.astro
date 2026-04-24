@@ -1,5 +1,5 @@
 ---
-const npmUrl = 'https://www.npmjs.com/package/codexa-cli';
+const npmUrl = 'https://www.npmjs.com/package/@codexa/cli';
 const githubUrl = 'https://github.com/sayam-1705/codexa';
 const docsUrl = 'https://github.com/sayam-1705/codexa/blob/main/docs/README.md';
 ---
@@ -15,7 +15,7 @@ const docsUrl = 'https://github.com/sayam-1705/codexa/blob/main/docs/README.md';
     </p>
 
     <div class="install card">
-      <code id="installCmd">npm install -g codexa-cli</code>
+      <code id="installCmd">npm install -g @codexa/cli</code>
       <button type="button" id="copyInstall">Copy</button>
     </div>
 
@@ -36,7 +36,7 @@ const docsUrl = 'https://github.com/sayam-1705/codexa/blob/main/docs/README.md';
     </ul>
     <div class="meta">
       <span>CLI command: <code>codexa</code></span>
-      <span>Package: <code>codexa-cli</code></span>
+      <span>Package: <code>@codexa/cli</code></span>
     </div>
   </aside>
 </section>
@@ -46,7 +46,7 @@ const docsUrl = 'https://github.com/sayam-1705/codexa/blob/main/docs/README.md';
   const installCmd = document.getElementById('installCmd');
   if (copyBtn && installCmd && navigator.clipboard) {
     copyBtn.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(installCmd.textContent || 'npm install -g codexa-cli');
+      await navigator.clipboard.writeText(installCmd.textContent || 'npm install -g @codexa/cli');
       copyBtn.textContent = 'Copied';
       setTimeout(() => {
         copyBtn.textContent = 'Copy';

@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install -g codexa-cli
+      - run: npm install -g @codexa/cli
       - run: codexa check --ci --base main --all-files
 ```
 

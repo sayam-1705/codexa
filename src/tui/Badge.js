@@ -25,5 +25,5 @@ export default function Badge({ severity, size = 'sm' }) {
   const text = sizeMap[size][severity] || sizeMap.sm[severity];
   const colorFn = colorMap[severity] || chalk.dim;
 
-  return <Text>{colorFn(text)}</Text>;
+  return React.createElement(Text, null, colorFn(text));
 }

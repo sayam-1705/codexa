@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { renderSimpleUI } from './simpleUI.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -8,49 +9,25 @@ const packagePath = resolve(__dirname, '../../package.json');
 const pkg = JSON.parse(readFileSync(packagePath, 'utf8'));
 
 /**
- * Determine whether to render TUI or output CI JSON
+ * Determine whether to render simple terminal UI or output CI JSON
  */
 export async function renderResults(classifiedResult, config, options = {}) {
   const { ciMode = false } = options;
-  const isTTY = process.stdout.isTTY && !ciMode;
 
-  if (!isTTY) {
-    // CI mode: output structured JSON and exit
+  if (ciMode) {
+    // Explicit CI mode: output JSON
     outputCIJson(classifiedResult);
     return;
   }
 
-  // Interactive mode: launch Ink TUI
+  // Interactive mode: use simple chalk-based UI (no JSX parsing issues)
   try {
-    // Check if interactive mode is feasible
-    // If there are blocking errors, still try to show TUI
-    // but gracefully fall back if React/Ink unavailable
-
-    let React;
-    let render;
-    let App;
-
-    try {
-      React = await import('react');
-      render = (await import('ink')).render;
-      App = (await import('./App.js')).default;
-    } catch (importErr) {
-      // If imports fail, just output JSON
-      console.error(`TUI unavailable: ${importErr.message}`);
-      outputCIJson(classifiedResult);
-      return;
-    }
-
-    // Create component using React.createElement to avoid JSX parsing issues
-    const component = React.createElement(App, {
-      result: classifiedResult,
-      config,
-    });
-
-    render(component);
+    renderSimpleUI(classifiedResult);
+    // Exit with appropriate code
+    process.exit(classifiedResult.blocking.length > 0 ? 1 : 0);
   } catch (err) {
-    // Graceful fallback to JSON on any error
-    console.error(`TUI Error: ${err.message}`);
+    // Fallback to JSON on any error
+    console.error(`Error: ${err.message}`);
     outputCIJson(classifiedResult);
   }
 }

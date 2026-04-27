@@ -117,8 +117,8 @@ async function checkCommand(options) {
     const classified = await runLinter(stagedFiles, repoPath, config);
     spinner.stop();
 
-    // Determine if CI mode is forced
-    const ciMode = options.ci || !process.stdout.isTTY;
+    // Only force CI mode if --ci flag is explicitly set
+    const ciMode = options.ci;
 
     // Render results (TUI or CI JSON)
     await renderResults(classified, config, { ciMode });

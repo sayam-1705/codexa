@@ -1,6 +1,6 @@
 {
   "name": "codexa-toolkit",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "AI pre-commit guardian. Blame-aware. Auto-fix. Learns.",
   "type": "module",
   "main": "src/index.js",

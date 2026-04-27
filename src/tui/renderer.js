@@ -22,12 +22,26 @@ export async function renderResults(classifiedResult, config, options = {}) {
 
   // Interactive mode: launch Ink TUI
   try {
-    // Dynamic imports for JSX transpilation
-    const React = await import('react');
-    const { render } = await import('ink');
-    const { default: App } = await import('./App.js');
+    // Check if interactive mode is feasible
+    // If there are blocking errors, still try to show TUI
+    // but gracefully fall back if React/Ink unavailable
 
-    // Create component using React.createElement to avoid JSX parsing
+    let React;
+    let render;
+    let App;
+
+    try {
+      React = await import('react');
+      render = (await import('ink')).render;
+      App = (await import('./App.js')).default;
+    } catch (importErr) {
+      // If imports fail, just output JSON
+      console.error(`TUI unavailable: ${importErr.message}`);
+      outputCIJson(classifiedResult);
+      return;
+    }
+
+    // Create component using React.createElement to avoid JSX parsing issues
     const component = React.createElement(App, {
       result: classifiedResult,
       config,
@@ -35,7 +49,8 @@ export async function renderResults(classifiedResult, config, options = {}) {
 
     render(component);
   } catch (err) {
-    console.error('TUI Error:', err.message);
+    // Graceful fallback to JSON on any error
+    console.error(`TUI Error: ${err.message}`);
     outputCIJson(classifiedResult);
   }
 }

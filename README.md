@@ -1,6 +1,9 @@
 # CODEXA
 
-![Codexa Logo](landing/public/favicon.svg) CODEXA
+<p>
+  <img src="landing/public/favicon.svg" width="40" height="40" alt="Codexa Logo" align="center">
+  <strong>CODEXA</strong>
+</p>
 
 AI pre-commit guardian. Blame-aware. Auto-fix. Learns your codebase.
 
@@ -46,20 +49,20 @@ codexa init
 
 ## Features
 
-| Feature | Solo | Team |
-| --- | --- | --- |
-| Blame-aware linting | Y | Y |
-| Auto-fix | Y | Y |
-| AI suggestions (Ollama) | Y | Y |
-| .codexa/ learning folder | Y | Y (shared) |
-| Clean commit streak | Y | - |
-| codexa report + sparklines | Y | - |
-| Weekly digest | Y | - |
-| Shared team config | - | Y |
-| GitHub Actions CI | - | Y |
-| Team dashboard | - | Y |
-| Hotspot detection | - | Y |
-| Plugin system | Y | Y |
+| Feature                    | Solo | Team       |
+| -------------------------- | ---- | ---------- |
+| Blame-aware linting        | Y    | Y          |
+| Auto-fix                   | Y    | Y          |
+| AI suggestions (Ollama)    | Y    | Y          |
+| .codexa/ learning folder   | Y    | Y (shared) |
+| Clean commit streak        | Y    | -          |
+| codexa report + sparklines | Y    | -          |
+| Weekly digest              | Y    | -          |
+| Shared team config         | -    | Y          |
+| GitHub Actions CI          | -    | Y          |
+| Team dashboard             | -    | Y          |
+| Hotspot detection          | -    | Y          |
+| Plugin system              | Y    | Y          |
 
 ## Supported Languages
 

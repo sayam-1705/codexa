@@ -36,6 +36,10 @@ const DEFAULT_CONFIG = {
     failOn: 'CRITICAL',
     badge: true,
   },
+  ai: {
+    enabled: true,
+    model: null,
+  },
   _codexaSchema: '2.0.0',
 };
 
@@ -143,6 +147,16 @@ export function validateConfig(config) {
       errors.push(
         `ci.failOn must be one of: ${validFailOn.join(', ')} (got: ${config.ci.failOn})`
       );
+    }
+  }
+
+  // Check AI settings
+  if (config.ai) {
+    if (typeof config.ai.enabled !== 'boolean') {
+      errors.push(`ai.enabled must be a boolean (got: ${typeof config.ai.enabled})`);
+    }
+    if (config.ai.model !== null && typeof config.ai.model !== 'string') {
+      errors.push(`ai.model must be a string or null`);
     }
   }
 

@@ -12,12 +12,12 @@ AI pre-commit guardian. Blame-aware. Auto-fix. Learns your codebase.
 <!-- Add terminal demo GIF here -->
 
 Record with VHS or asciinema and convert to GIF.
-Recommended flow: codexa init -> git commit -> TUI -> [x] fix -> clean commit.
+Recommended flow: codexa init -> git commit -> check fails -> codexa fix -> clean commit.
 
 ## Why Codexa
 
 - Blame-aware: only your errors block commits. Pre-existing issues are visible, never blocking.
-- Auto-fix: one keypress applies applicable fixes. Fewer context switches, fewer bypasses.
+- Auto-fix: codexa fix command applies applicable fixes. Fewer context switches, fewer bypasses.
 - Learns: .codexa/patterns.json remembers accepted fixes and prioritizes them next time.
 
 ## Quick Start - Solo
@@ -49,8 +49,7 @@ codexa init
 | Feature | Solo | Team |
 | --- | --- | --- |
 | Blame-aware linting | Y | Y |
-| Interactive TUI | Y | Y |
-| Auto-fix [x] | Y | Y |
+| Auto-fix | Y | Y |
 | AI suggestions (Ollama) | Y | Y |
 | .codexa/ learning folder | Y | Y (shared) |
 | Clean commit streak | Y | - |

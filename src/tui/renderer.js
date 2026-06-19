@@ -16,33 +16,35 @@ export async function renderResults(classifiedResult, config, options = {}) {
 
   if (ciMode) {
     // Explicit CI mode: output JSON
-    outputCIJson(classifiedResult);
+    outputCIJson(classifiedResult, config);
     return;
   }
 
   // Interactive mode: use simple chalk-based UI (no JSX parsing issues)
   try {
     renderSimpleUI(classifiedResult);
+    const blockThreshold = config?.team?.blockThreshold || 1;
     // Exit with appropriate code
-    process.exit(classifiedResult.blocking.length > 0 ? 1 : 0);
+    process.exit(classifiedResult.blocking.length >= blockThreshold ? 1 : 0);
   } catch (err) {
     // Fallback to JSON on any error
     console.error(`Error: ${err.message}`);
-    outputCIJson(classifiedResult);
+    outputCIJson(classifiedResult, config);
   }
 }
 
 /**
  * Output structured JSON for CI environments
  */
-export function outputCIJson(classifiedResult) {
+export function outputCIJson(classifiedResult, config = {}) {
   const { blocking, warnings, minor, preexisting } = classifiedResult;
+  const blockThreshold = config?.team?.blockThreshold || 1;
 
   // Determine overall result status
   let result = 'clean';
-  if (blocking.length > 0) {
+  if (blocking.length >= blockThreshold) {
     result = 'blocked';
-  } else if (warnings.length > 0) {
+  } else if (warnings.length > 0 || blocking.length > 0) {
     result = 'warned';
   }
 

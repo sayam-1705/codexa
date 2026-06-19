@@ -55,7 +55,7 @@ const adapter = {
    * Lint JavaScript/TypeScript files
    * Filter to supported extensions and delegate to lintJavaScript
    */
-  async lint(files) {
+  async lint(files, config = {}) {
     // Filter to supported extensions
     const jsFiles = files.filter((f) =>
       adapter.extensions.some((ext) => f.endsWith(ext))
@@ -66,7 +66,7 @@ const adapter = {
     }
 
     // Delegate to existing profile
-    return await lintJavaScript(jsFiles);
+    return await lintJavaScript(jsFiles, config);
   },
 
   /**

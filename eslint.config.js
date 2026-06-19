@@ -18,10 +18,4 @@ export default [
       'no-console': 'off', // CLI can use console
     },
   },
-  {
-    files: ['src/tui/**/*.js'],
-    rules: {
-      'no-unused-vars': ['warn', { varsIgnorePattern: '^(React|[A-Z].*)$' }],
-    },
-  },
 ];

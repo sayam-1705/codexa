@@ -1,52 +1,19 @@
 import { ESLint } from 'eslint';
 import { createError, SEVERITIES } from '../core/schema.js';
+import { buildEslintOptions } from './eslintConfig.js';
 
-// Severity mappings
-const SEVERITY_MAP = {
-  [SEVERITIES.CRITICAL]: ['no-undef', 'no-redeclare'],
-  [SEVERITIES.MODERATE]: ['no-unused-vars', 'complexity', 'no-console'],
-  [SEVERITIES.MINOR]: ['prefer-const', 'eqeqeq', 'semi'],
-};
+const eslintCache = new Map();
 
-// Build reverse map: rule -> severity
-const RULE_SEVERITY = {};
-for (const [severity, rules] of Object.entries(SEVERITY_MAP)) {
-  for (const rule of rules) {
-    RULE_SEVERITY[rule] = severity;
+function getEslintInstance(respectProjectConfig) {
+  const cacheKey = respectProjectConfig ? 'project' : 'default';
+  if (!eslintCache.has(cacheKey)) {
+    const options = buildEslintOptions({ respectProjectConfig });
+    eslintCache.set(cacheKey, new ESLint(options));
   }
+  return eslintCache.get(cacheKey);
 }
 
-function mapSeverity(ruleId) {
-  return RULE_SEVERITY[ruleId] || SEVERITIES.MINOR;
-}
-
-function createEslint() {
-  return new ESLint({
-    useEslintrc: false,
-    baseConfig: {
-      env: {
-        es2022: true,
-        node: true,
-      },
-      parserOptions: {
-        sourceType: 'module',
-        ecmaVersion: 2022,
-      },
-      rules: {
-        'no-undef': 'error',
-        'no-redeclare': 'error',
-        'no-unused-vars': 'warn',
-        complexity: ['warn', { max: 10 }],
-        'no-console': 'warn',
-        'prefer-const': 'warn',
-        eqeqeq: 'warn',
-        semi: 'warn',
-      },
-    },
-  });
-}
-
-export async function lintJavaScript(files) {
+export async function lintJavaScript(files, config = {}) {
   if (!files.length) {
     return [];
   }
@@ -60,23 +27,27 @@ export async function lintJavaScript(files) {
     return [];
   }
 
-  const eslint = createEslint();
+  const respectProjectConfig = config.respectProjectConfig === true;
+  const eslint = getEslintInstance(respectProjectConfig);
 
   const results = await eslint.lintFiles(jsFiles);
   const errors = [];
 
   for (const result of results) {
     for (const message of result.messages) {
-      const severity = mapSeverity(message.ruleId || 'unknown');
+      const isParseError = message.fatal === true || message.ruleId === null;
+      const rule = isParseError ? 'parse-error' : (message.ruleId || 'unknown');
+
       const error = createError({
         file: result.filePath,
-        line: message.line,
-        col: message.column,
+        line: message.line || 1,
+        col: message.column || 1,
         message: message.message,
-        rule: message.ruleId || 'unknown',
-        severity,
+        rule,
+        severity: SEVERITIES.MINOR,
         language: result.filePath.endsWith('.ts') || result.filePath.endsWith('.tsx') ? 'typescript' : 'javascript',
         isInDiff: false,
+        isParseError,
       });
       errors.push(error);
     }

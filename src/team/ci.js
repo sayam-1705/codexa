@@ -34,14 +34,20 @@ export async function runCICheck(repoPath, config, options = {}) {
     const classified = await runLinter(stagedFiles, repoPath, config);
 
     // Format output
-    const output = formatCIOutput(classified, repoPath, config);
+    let output;
+    if (config.ci && config.ci.outputFormat === 'sarif') {
+      output = formatSarifOutput(classified, repoPath, config);
+    } else {
+      output = formatCIOutput(classified, repoPath, config);
+    }
 
     // Print JSON to stdout (no ANSI codes)
     console.log(JSON.stringify(output, null, 2));
 
     // Determine exit code
     let exitCode = 0;
-    if (config.ci.failOn === 'CRITICAL' && classified.blocking.length > 0) {
+    const blockThreshold = config?.team?.blockThreshold || 1;
+    if (config.ci.failOn === 'CRITICAL' && classified.blocking.length >= blockThreshold) {
       exitCode = 1;
     } else if (
       config.ci.failOn === 'MODERATE' &&
@@ -129,6 +135,62 @@ export function formatCIOutput(result, repoPath, config) {
   }
 
   return output;
+}
+
+export function formatSarifOutput(result, repoPath, config) {
+  const allErrors = [
+    ...result.blocking,
+    ...result.warnings,
+    ...result.minor,
+    ...result.preexisting,
+  ];
+
+  const results = allErrors.map(error => {
+    let level = 'note';
+    if (error.severity === 'CRITICAL') {
+      level = 'error';
+    } else if (error.severity === 'MODERATE') {
+      level = 'warning';
+    }
+
+    return {
+      ruleId: error.rule || 'unknown',
+      level,
+      message: {
+        text: error.message
+      },
+      locations: [
+        {
+          physicalLocation: {
+            artifactLocation: {
+              uri: error.file
+            },
+            region: {
+              startLine: error.line || 1,
+              startColumn: error.col || 1
+            }
+          }
+        }
+      ]
+    };
+  });
+
+  return {
+    $schema: "https://json.schemastore.org/sarif-2.1.0.json",
+    version: "2.1.0",
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: "codexa",
+            informationUri: "https://github.com/sayam-1705/codexa",
+            version: CODEXA_VERSION
+          }
+        },
+        results
+      }
+    ]
+  };
 }
 
 // Helper functions

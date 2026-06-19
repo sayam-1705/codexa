@@ -306,77 +306,31 @@ Complete field-by-field guide for codexa.config.json.
 ```json
 { "ci": { "badge": true } }
 ```
+
+### ai.enabled
+
+- Type: boolean
+- Default: true
+- Allowed values: true, false
+- What it does: Enables or disables AI integration for error explanations and suggestions.
+- Example:
+
 ```json
-{
-  "ci": {
-    "outputFormat": "json"
-  }
-}
+{ "ai": { "enabled": false } }
 ```
 
----
+### ai.model
 
-### `ci.postPRComment`
+- Type: string | null
+- Default: null
+- Allowed values: Any valid Ollama model string
+- What it does: Forces Codexa to use a specific model for AI features.
+- Example:
 
-**Type**: `boolean`
-
-**Default**: `true`
-
-**Description**
-If `true`, Codexa posts a comment on PRs with check results. Requires GitHub Actions configuration.
-
-**Example**
 ```json
-{
-  "ci": {
-    "postPRComment": true
-  }
-}
+{ "ai": { "model": "llama3" } }
 ```
 
----
-
-### `ci.failOn`
-
-**Type**: `string`
-
-**Default**: `"CRITICAL"`
-
-**Allowed Values**: `"CRITICAL"` | `"MODERATE"` | `"any"`
-
-**Description**
-CI build fails if errors at or above this severity level are found.
-
-**Example**
-```json
-{
-  "ci": {
-    "failOn": "CRITICAL"
-  }
-}
-```
-
----
-
-### `ci.badge`
-
-**Type**: `boolean`
-
-**Default**: `true`
-
-**Description**
-If `true`, Codexa generates a quality badge for README.md.
-
-**Example**
-```json
-{
-  "ci": {
-    "badge": true
-  }
-}
-```
-
----
 
 ## Complete Example
 

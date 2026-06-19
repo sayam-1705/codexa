@@ -32,6 +32,7 @@ const JS_RULES = {
     'prefer-promise-reject-errors',
     '@typescript-eslint/no-floating-promises',
     '@typescript-eslint/await-thenable',
+    'parse-error',
   ],
   [SEVERITIES.MINOR]: [
     'prefer-const',

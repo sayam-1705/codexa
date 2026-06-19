@@ -4,22 +4,7 @@ import { createError, SEVERITIES } from '../core/schema.js';
 
 const execFileAsync = promisify(execFile);
 
-const SEVERITY_MAP = {
-  [SEVERITIES.CRITICAL]: ['E9', 'F8', 'F4'], // syntax errors, undefined names, import errors
-  [SEVERITIES.MODERATE]: ['C9', 'B'], // complexity, bugbear
-  [SEVERITIES.MINOR]: ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'W', 'I'], // style errors, warnings, isort
-};
 
-function mapSeverity(errorCode) {
-  for (const [severity, prefixes] of Object.entries(SEVERITY_MAP)) {
-    for (const prefix of prefixes) {
-      if (errorCode.startsWith(prefix)) {
-        return severity;
-      }
-    }
-  }
-  return SEVERITIES.MINOR; // default
-}
 
 export async function lintPython(files) {
   const pyFiles = files.filter(f => f.endsWith('.py'));
@@ -37,14 +22,13 @@ export async function lintPython(files) {
 
     const errors = [];
     for (const result of results) {
-      const severity = mapSeverity(result.code);
       const error = createError({
         file: result.filename,
         line: result.location.row,
         col: result.location.column,
         message: result.message,
         rule: result.code,
-        severity,
+        severity: SEVERITIES.MINOR,
         language: 'python',
         isInDiff: false,
       });
@@ -65,14 +49,13 @@ export async function lintPython(files) {
         const results = JSON.parse(err.stdout);
         const errors = [];
         for (const result of results) {
-          const severity = mapSeverity(result.code);
           const error = createError({
             file: result.filename,
             line: result.location.row,
             col: result.location.column,
             message: result.message,
             rule: result.code,
-            severity,
+            severity: SEVERITIES.MINOR,
             language: 'python',
             isInDiff: false,
           });

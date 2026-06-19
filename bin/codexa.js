@@ -11,6 +11,7 @@ import {
   getAvailableModels,
   selectBestModel,
 } from '../src/ai/ollama.js';
+import { loadConfig } from '../src/team/config.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const CLI_VERSION = pkg.version;
@@ -20,7 +21,10 @@ async function printVersion() {
   const adapterNames = listAdapters().installed.map((a) => a.name).join(', ') || 'none';
 
   let aiStatus = 'Ollama not running';
-  if (await isOllamaAvailable()) {
+  const config = await loadConfig(process.cwd()).catch(() => ({}));
+  if (config.ai?.enabled === false) {
+    aiStatus = 'AI disabled by config';
+  } else if (await isOllamaAvailable()) {
     const models = await getAvailableModels();
     const selected = await selectBestModel(models);
     aiStatus = selected
@@ -34,31 +38,7 @@ async function printVersion() {
   console.log(`AI: ${aiStatus}`);
 }
 
-function printHelp() {
-  console.log('Usage: codexa <command> [options]');
-  console.log('');
-  console.log('AI pre-commit guardian. Blame-aware. Auto-fix. Learns.');
-  console.log('');
-  console.log('Commands:');
-  console.log('  init                      Initialize Codexa in a repo');
-  console.log('  check                     Lint staged files (runs automatically on commit)');
-  console.log('  explain <loc>             Explain an error at file:line');
-  console.log('  history                   Show past fix patterns');
-  console.log('  report                    Show quality trend report');
-  console.log('  stats                     Show lifetime statistics');
-  console.log('  config                    Manage configuration');
-  console.log('  dashboard                 Show team quality dashboard');
-  console.log('  add-language              Install a community language adapter');
-  console.log('  list-languages            List installed adapters');
-  console.log('  remove-language           Remove a community adapter');
-  console.log('');
-  console.log('Options:');
-  console.log('  -v, --version             Show version');
-  console.log('  -h, --help                Show help');
-  console.log('');
-  console.log('Docs: https://github.com/sayam-1705/codexa/blob/main/docs/README.md');
-  console.log('Issues: https://github.com/sayam-1705/codexa/issues');
-}
+
 
 const rawArgs = process.argv.slice(2);
 if (rawArgs.length === 1 && (rawArgs[0] === '-v' || rawArgs[0] === '--version')) {
@@ -66,12 +46,11 @@ if (rawArgs.length === 1 && (rawArgs[0] === '-v' || rawArgs[0] === '--version'))
   process.exit(0);
 }
 
-if (rawArgs.length === 1 && (rawArgs[0] === '-h' || rawArgs[0] === '--help')) {
-  printHelp();
-  process.exit(0);
-}
 
-function loadConfig(repoPath) {
+
+// loadConfig is now imported from src/team/config.js (async, full validation)
+// Kept as a lightweight sync fallback for internal module paths that cannot await:
+function loadConfigSync(repoPath) {
   const configPath = join(repoPath, 'codexa.config.json');
   if (!existsSync(configPath)) {
     return { blameMode: 'strict' };
@@ -185,8 +164,10 @@ program
     console.log(chalk.bold(`\n${match[1]}:${lineNumber}`));
     console.log(chalk.dim(targetLine));
 
+    const config = await loadConfig(process.cwd()).catch(() => loadConfigSync(process.cwd()));
+
     try {
-      if (await isOllamaAvailable()) {
+      if (config.ai?.enabled !== false && await isOllamaAvailable()) {
         const { buildPrompt } = await import('../src/ai/prompt.js');
         const { getSuggestion } = await import('../src/ai/ollama.js');
         const models = await getAvailableModels();
@@ -257,7 +238,6 @@ program
   .option('--html', 'Write dashboard to codexa-dashboard.html')
   .action(async (options) => {
     const repoPath = process.cwd();
-    const { loadConfig } = await import('../src/team/config.js');
     const { getDb } = await import('../src/solo/db.js');
     const { getDashboardData, formatDashboardTerminal } = await import('../src/team/dashboard.js');
 
@@ -408,6 +388,83 @@ program
   .action(async (options) => {
     const { statsCommand } = await import('../src/commands/stats.js');
     await statsCommand(options);
+  });
+
+program
+  .command('help [command]')
+  .description('Show help for a command, or list all commands')
+  .action((commandName) => {
+    if (commandName) {
+      const cmd = program.commands.find((c) => c.name() === commandName);
+      if (cmd) {
+        cmd.outputHelp();
+      } else {
+        console.error(`Unknown command: ${commandName}`);
+        console.log('Run "codexa help" to see all commands.');
+        process.exit(1);
+      }
+    } else {
+      program.outputHelp();
+    }
+  });
+
+program
+  .command('uninstall')
+  .description('Remove Codexa from this repository (hook, config, .codexa/ data)')
+  .option('--yes', 'Skip confirmation prompts')
+  .option('--purge-global', 'Also remove ~/.codexa (adapter registry, AI cache) — affects ALL repos')
+  .action(async (options) => {
+    const { uninstallCommand } = await import('../src/commands/uninstall.js');
+    await uninstallCommand(options);
+  });
+
+program
+  .command('doctor')
+  .description('Check environment for issues')
+  .option('--strict', 'Exit with error code if any check fails')
+  .action(async (options) => {
+    const { doctorCommand } = await import('../src/commands/doctor.js');
+    await doctorCommand(options);
+  });
+
+program
+  .command('fix <loc>')
+  .description('Apply an auto-fix at file:line (where supported)')
+  .action(async (loc) => {
+    const match = /^(.+):(\d+)$/.exec(loc);
+    if (!match) {
+      console.error('Invalid location. Fix: use file:line (example: src/app.js:42).');
+      process.exit(1);
+    }
+
+    const filePath = join(process.cwd(), match[1]);
+    const lineNumber = Number(match[2]);
+
+    if (!existsSync(filePath)) {
+      console.error(`File not found: ${match[1]}\nFix: verify the relative path and rerun codexa fix <file>:<line>.`);
+      process.exit(1);
+    }
+
+    const { findErrorAtLocation } = await import('../src/core/locate.js');
+    const error = await findErrorAtLocation(filePath, lineNumber);
+
+    if (!error) {
+      console.error(`No fixable error found at ${match[1]}:${lineNumber}`);
+      process.exit(1);
+    }
+
+    const { applyFix } = await import('../src/tui/FixEngine.js');
+    const result = await applyFix(error);
+
+    if (result.success) {
+      console.log(chalk.green('✓ ' + result.message));
+      if (result.diff) {
+        console.log(chalk.dim(result.diff));
+      }
+    } else {
+      console.error(chalk.red('✗ ' + result.message));
+      process.exit(1);
+    }
   });
 
 program.parse(process.argv);

@@ -428,17 +428,52 @@ Exit codes:
 - `0` Adapter removed.
 - `1` Adapter missing, built-in, or registry update failed.
 
-**Description**
-Unregisters an adapter from Codexa. Built-in adapters (JavaScript, Python) cannot be removed.
+## codexa uninstall
 
-**Examples**
+Usage:
+
 ```bash
-codexa remove-language codexa-adapter-go
+codexa uninstall
+codexa uninstall --yes --purge-global
 ```
 
-**Exit Codes**
-- `0` — Success
-- `1` — Adapter not found or attempt to remove built-in adapter
+Description:
+
+Removes Codexa from the repository (hook, config, .codexa/ data).
+
+Flags:
+
+- `--yes` (boolean) Skip confirmation prompts.
+- `--purge-global` (boolean) Also remove ~/.codexa (adapter registry, AI cache) — affects ALL repos.
+
+## codexa doctor
+
+Usage:
+
+```bash
+codexa doctor
+codexa doctor --strict
+```
+
+Description:
+
+Check environment for issues (Node version, git hook, config, linters, AI, permissions).
+
+Flags:
+
+- `--strict` (boolean) Exit with error code if any check fails.
+
+## codexa fix <loc>
+
+Usage:
+
+```bash
+codexa fix <file>:<line>
+```
+
+Description:
+
+Apply an auto-fix at file:line (where supported).
 
 ---
 

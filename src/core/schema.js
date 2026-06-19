@@ -41,6 +41,7 @@ export function createError(fields) {
     severity: fields.severity,
     language: fields.language,
     isInDiff: fields.isInDiff !== undefined ? fields.isInDiff : false,
+    isParseError: fields.isParseError !== undefined ? fields.isParseError : false,
     blameCategory,
   };
 

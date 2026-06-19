@@ -142,4 +142,39 @@ describe('renderer', () => {
 
     expect(processExitSpy).toHaveBeenCalledWith(0);
   });
+
+  it('blockThreshold=2 treats 1 blocking error as warned (exits 0)', async () => {
+    const { outputCIJson } = await import('../src/tui/renderer.js');
+
+    const result = {
+      blocking: [{ severity: 'CRITICAL' }],
+      warnings: [],
+      minor: [],
+      preexisting: [],
+    };
+
+    outputCIJson(result, { team: { blockThreshold: 2 } });
+
+    const output = JSON.parse(consoleLogSpy.mock.calls[0][0]);
+    expect(output.result).toBe('warned'); // 1 < threshold of 2
+    expect(processExitSpy).toHaveBeenCalledWith(0);
+  });
+
+  it('blockThreshold=2 blocks when 2+ errors present', async () => {
+    const { outputCIJson } = await import('../src/tui/renderer.js');
+
+    const result = {
+      blocking: [{ severity: 'CRITICAL' }, { severity: 'CRITICAL' }],
+      warnings: [],
+      minor: [],
+      preexisting: [],
+    };
+
+    outputCIJson(result, { team: { blockThreshold: 2 } });
+
+    const output = JSON.parse(consoleLogSpy.mock.calls[0][0]);
+    expect(output.result).toBe('blocked');
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+  });
 });
+

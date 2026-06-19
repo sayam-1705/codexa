@@ -15,6 +15,16 @@ ollama serve
 ollama pull deepseek-coder:6.7b
 ```
 
+If you don't want to use AI features, you can disable them in your config:
+
+```json
+{
+  "ai": {
+    "enabled": false
+  }
+}
+```
+
 ## Model Selection
 
 Codexa checks available models and prefers code-oriented models in this order:

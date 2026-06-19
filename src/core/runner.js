@@ -63,7 +63,8 @@ export async function runLinter(stagedFiles, repoPath = process.cwd(), config = 
 
   // Calculate stats for logging
   const errorsBlocked = classified.blocking.length;
-  const commitAllowed = errorsBlocked === 0;
+  const blockThreshold = config?.team?.blockThreshold || 1;
+  const commitAllowed = errorsBlocked < blockThreshold;
 
   // Persist to database
   try {
@@ -98,7 +99,7 @@ export async function runLinter(stagedFiles, repoPath = process.cwd(), config = 
     // Get streak info
     const streak = getCurrentStreak(repoPath);
     const streakDisplay = getStreakDisplay(repoPath).display;
-    const streakAtRisk = streak > 0 && errorsBlocked > 0;
+    const streakAtRisk = streak > 0 && errorsBlocked >= blockThreshold;
 
     // Add metadata to classified results
     classified.runId = runId;

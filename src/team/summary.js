@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, renameSync } from 'fs';
 import { resolve } from 'path';
 
 const SUMMARY_PATH = '.codexa/codexa-summary.json';
@@ -217,8 +217,7 @@ function writeSummaryAtomic(repoPath, summary) {
   try {
     writeFileSync(tempPath, JSON.stringify(summary, null, 2), 'utf8');
     // Rename is atomic on most filesystems
-    const fs = require('fs');
-    fs.renameSync(tempPath, summaryPath);
+    renameSync(tempPath, summaryPath);
   } catch (err) {
     throw new Error(`Failed to write summary: ${err.message}`);
   }

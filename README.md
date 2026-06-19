@@ -1,6 +1,6 @@
 # CODEXA
 
-![Codexa Logo Placeholder](docs/assets/logo-placeholder.svg)
+![Codexa Logo](landing/public/favicon.svg) CODEXA
 
 AI pre-commit guardian. Blame-aware. Auto-fix. Learns your codebase.
 

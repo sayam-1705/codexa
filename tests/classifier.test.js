@@ -4,6 +4,40 @@ import { createError, SEVERITIES, BLAME_CATEGORIES } from '../src/core/schema.js
 
 describe('classifier', () => {
   describe('classifyErrors with blameMode=strict', () => {
+    it('does not bypass policy when ownership is unknown', async () => {
+      const errors = [{ file: '/tmp/new.js', line: 1, col: 1, message: 'bad', rule: 'no-undef', language: 'javascript', severity: SEVERITIES.CRITICAL, blameCategory: BLAME_CATEGORIES.UNKNOWN }];
+      const result = await classifyErrors(errors, new Map(), { blameMode: 'strict' });
+      expect(result.blocking).toHaveLength(1);
+      expect(result.preexisting).toHaveLength(0);
+    });
+
+    it('applies rule severity overrides and configured action buckets', async () => {
+      const error = createError({
+        file: '/src/file.js',
+        line: 1,
+        col: 1,
+        message: 'console use',
+        rule: 'no-console',
+        severity: SEVERITIES.MODERATE,
+        language: 'javascript',
+      });
+      const result = await classifyErrors(
+        [error],
+        new Map([['/src/file.js', [{ start: 1, end: 1 }]]]),
+        {
+          blameMode: 'strict',
+          severity: {
+            overrides: { 'no-console': 'CRITICAL' },
+            block: ['CRITICAL'],
+            warn: [],
+            log: ['MINOR'],
+          },
+        }
+      );
+      expect(result.blocking).toHaveLength(1);
+      expect(result.warnings).toHaveLength(0);
+      expect(result.blocking[0].severity).toBe(SEVERITIES.CRITICAL);
+    });
     it('returns only yours errors in blocking/warnings/minor', async () => {
       const errors = [
         createError({

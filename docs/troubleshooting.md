@@ -144,57 +144,6 @@ codexa check --ci
 
 ---
 
-## AI Suggestions
-
-### `Cannot connect to Ollama at localhost:11434`
-
-**Cause**: Ollama service not running
-
-**Fix**:
-```bash
-# Start Ollama
-ollama serve
-
-# In another terminal, verify it's running
-curl http://localhost:11434/api/tags
-
-# In Codexa, AI suggestions will now work
-codexa check
-```
-
----
-
-### `Ollama error: model not found`
-
-**Cause**: Model hasn't been pulled yet
-
-**Fix**:
-```bash
-# Pull the recommended model
-ollama pull deepseek-coder:6.7b
-
-# Or use another model
-ollama pull llama2
-ollama pull mistral
-
-# Configure Codexa to use it
-codexa config set ollama.model llama2
-```
-
----
-
-### `Ollama suggestions are slow`
-
-**Cause**: Model is too large for your hardware, or suggestions are being streamed
-
-**Fix**: Use a smaller model
-```bash
-ollama pull deepseek-coder:1.3b
-codexa config set ollama.model deepseek-coder:1.3b
-```
-
----
-
 ## Team & CI
 
 ### `CI check failed: CRITICAL errors found`

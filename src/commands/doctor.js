@@ -1,9 +1,8 @@
 import { readFileSync, existsSync, accessSync, constants } from 'fs';
 import { resolve } from 'path';
 import { homedir } from 'os';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import chalk from 'chalk';
-import { isOllamaAvailable, getAvailableModels } from '../ai/ollama.js';
 import { loadConfig } from '../team/config.js';
 import { isHookInstalled } from '../git/hooks.js';
 
@@ -38,20 +37,18 @@ export async function doctorCommand(options) {
   allPassed &= check('Codexa pre-commit hook installed', hasHook);
 
   // 4. Config valid
-  let config;
   try {
-    config = await loadConfig(repoPath);
+    await loadConfig(repoPath);
     allPassed &= check('Configuration valid', true);
   } catch (err) {
     allPassed &= check('Configuration valid', false, err.message);
-    config = { ai: { enabled: true } }; // fallback
   }
 
   // 5. ESLint resolvable
   try {
     const { ESLint } = await import('eslint');
     const { buildEslintOptions } = await import('../profiles/eslintConfig.js');
-    const eslint = new ESLint(buildEslintOptions());
+    new ESLint(buildEslintOptions());
     allPassed &= check('ESLint resolvable and config works', true);
   } catch (err) {
     allPassed &= check('ESLint resolvable and config works', false, err.message);
@@ -59,26 +56,13 @@ export async function doctorCommand(options) {
 
   // 6. ruff on PATH
   try {
-    const ruffVersion = execSync('ruff --version', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    const ruffVersion = execFileSync('ruff', ['--version'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
     check('ruff available (Python linter)', true, ruffVersion);
   } catch (err) {
     check('ruff available (Python linter)', false, 'Not found on PATH');
   }
 
-  // 7. Ollama
-  if (config.ai?.enabled !== false) {
-    const ollamaUp = await isOllamaAvailable();
-    if (ollamaUp) {
-      const models = await getAvailableModels();
-      allPassed &= check('Ollama reachable', true, `${models.length} models found`);
-    } else {
-      allPassed &= check('Ollama reachable', false, 'Ensure Ollama is running');
-    }
-  } else {
-    check('Ollama reachable', true, 'Skipped (ai.enabled=false)');
-  }
-
-  // 8. .codexa writable
+  // 7. .codexa writable
   const codexaDir = resolve(repoPath, '.codexa');
   if (existsSync(codexaDir)) {
     try {
@@ -91,8 +75,8 @@ export async function doctorCommand(options) {
     check('.codexa/ directory writable', true, 'Does not exist yet');
   }
 
-  // 9. adapters.json readable
-  const globalDir = resolve(homedir(), '.codexa');
+  // 8. adapters.json readable
+  const globalDir = process.env.CODEXA_HOME || resolve(homedir(), '.codexa');
   const adaptersPath = resolve(globalDir, 'adapters.json');
   if (existsSync(adaptersPath)) {
     try {

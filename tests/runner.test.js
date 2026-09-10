@@ -34,6 +34,7 @@ describe('runner', () => {
 
   it(
     'runLinter([]) returns classified result with empty arrays',
+    { timeout: 10000 },
     async () => {
       const result = await runLinter([]);
       expect(result.blocking).toEqual([]);
@@ -42,12 +43,12 @@ describe('runner', () => {
       expect(result.preexisting).toEqual([]);
       expect(result.runId).toBeNull();
       expect(result.streak).toBe(0);
-    },
-    { timeout: 10000 }
+    }
   );
 
   it(
     'runLinter(null) returns classified result with empty arrays',
+    { timeout: 10000 },
     async () => {
       const result = await runLinter(null);
       expect(result.blocking).toEqual([]);
@@ -56,24 +57,24 @@ describe('runner', () => {
       expect(result.preexisting).toEqual([]);
       expect(result.runId).toBeNull();
       expect(result.streak).toBe(0);
-    },
-    { timeout: 10000 }
+    }
   );
 
   it(
     'runLinter() returns classified result for unsupported file extensions',
+    { timeout: 10000 },
     async () => {
       const result = await runLinter(['/path/to/file.md', '/path/to/readme.txt']);
       expect(result.blocking).toEqual([]);
       expect(result.warnings).toEqual([]);
       expect(result.minor).toEqual([]);
       expect(result.preexisting).toEqual([]);
-    },
-    { timeout: 10000 }
+    }
   );
 
   it(
     'runLinter() returns normalized error objects with all required fields',
+    { timeout: 10000 },
     async () => {
       const fixture = resolve('tests/fixtures/js-errors.js');
       const result = await runLinter([fixture]);
@@ -93,12 +94,12 @@ describe('runner', () => {
         expect(error).toHaveProperty('blameCategory');
         expect(Object.isFrozen(error)).toBe(true);
       }
-    },
-    { timeout: 10000 }
+    }
   );
 
   it(
     'runLinter() correctly groups files by language before linting',
+    { timeout: 10000 },
     async () => {
       const jsFixture = resolve('tests/fixtures/js-errors.js');
       const tsFixture = resolve('tests/fixtures/ts-errors.ts');
@@ -107,7 +108,6 @@ describe('runner', () => {
       const allErrors = [...result.blocking, ...result.warnings, ...result.minor, ...result.preexisting];
       const languages = new Set(allErrors.map(e => e.language));
       expect(languages.size).toBeGreaterThan(0);
-    },
-    { timeout: 10000 }
+    }
   );
 });

@@ -139,6 +139,12 @@ Complete field-by-field guide for codexa.config.json.
 { "ignore": ["dist", "coverage", "generated/"] }
 ```
 
+### Baseline and `.codexaignore`
+
+The initial `codexa init` scan covers tracked and untracked supported files while excluding Git-ignored paths, built-in directories such as `.git`, and paths matched by `.codexaignore`. A clean scan writes `.codexa/baseline.json`; a dirty scan never does. `codexa check` reads that file and evaluates only newly introduced staged findings. Update it explicitly with `codexa baseline update` after reviewing the change.
+
+`.codexaignore` patterns are repository-root relative. Directory patterns end in `/`; `*` matches path characters. Git's `.gitignore` and built-in exclusions are applied before `.codexaignore`, while explicit configuration ignores remain an analyzer-level exclusion.
+
 ### team.name
 
 - Type: string
@@ -307,29 +313,6 @@ Complete field-by-field guide for codexa.config.json.
 { "ci": { "badge": true } }
 ```
 
-### ai.enabled
-
-- Type: boolean
-- Default: true
-- Allowed values: true, false
-- What it does: Enables or disables AI integration for error explanations and suggestions.
-- Example:
-
-```json
-{ "ai": { "enabled": false } }
-```
-
-### ai.model
-
-- Type: string | null
-- Default: null
-- Allowed values: Any valid Ollama model string
-- What it does: Forces Codexa to use a specific model for AI features.
-- Example:
-
-```json
-{ "ai": { "model": "llama3" } }
-```
 
 
 ## Complete Example

@@ -1,5 +1,5 @@
 import { cosmiconfig } from 'cosmiconfig';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { readFile } from 'fs/promises';
 
@@ -26,7 +26,6 @@ const DEFAULT_CONFIG = {
     name: 'Engineering',
     enforceOnCI: true,
     blockThreshold: 1,
-    requireModel: null,
     allowForceCommit: true,
     forceCommitRequiresReason: true,
   },
@@ -36,11 +35,7 @@ const DEFAULT_CONFIG = {
     failOn: 'CRITICAL',
     badge: true,
   },
-  ai: {
-    enabled: true,
-    model: null,
-  },
-  _codexaSchema: '2.0.0',
+  _codexaSchema: '1.1.1',
 };
 
 /**
@@ -150,16 +145,6 @@ export function validateConfig(config) {
     }
   }
 
-  // Check AI settings
-  if (config.ai) {
-    if (typeof config.ai.enabled !== 'boolean') {
-      errors.push(`ai.enabled must be a boolean (got: ${typeof config.ai.enabled})`);
-    }
-    if (config.ai.model !== null && typeof config.ai.model !== 'string') {
-      errors.push(`ai.model must be a string or null`);
-    }
-  }
-
   return {
     valid: errors.length === 0,
     errors,
@@ -172,7 +157,7 @@ export function validateConfig(config) {
  * @param {Object} config - Config to check
  */
 export function checkVersionCompat(config) {
-  const cliVersion = '2.0.0';
+  const cliVersion = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
   const configVersion = config._codexaSchema || '1.0.0';
 
   if (semverGreaterThan(configVersion, cliVersion)) {

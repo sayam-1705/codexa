@@ -1,3 +1,11 @@
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const require = createRequire(import.meta.url);
+const parserPath = require.resolve('@typescript-eslint/parser');
+
 export function buildEslintOptions(options = {}) {
   const { rule = null, fix = false, respectProjectConfig = false } = options;
 
@@ -18,7 +26,7 @@ export function buildEslintOptions(options = {}) {
       node: true,
       browser: true,
     },
-    parser: '@typescript-eslint/parser',
+    parser: parserPath,
     parserOptions: {
       sourceType: 'module',
       ecmaVersion: 2022,
@@ -41,6 +49,7 @@ export function buildEslintOptions(options = {}) {
   return {
     fix,
     useEslintrc: respectProjectConfig,
+    resolvePluginsRelativeTo: packageRoot,
     baseConfig,
   };
 }

@@ -5,7 +5,7 @@
   <strong>CODEXA</strong>
 </p>
 
-AI pre-commit guardian. Blame-aware. Auto-fix. Learns your codebase.
+Blame-aware pre-commit guardian for code quality. Codexa establishes a clean baseline first, then blocks newly introduced issues in staged changes.
 
 [![npm version](https://img.shields.io/npm/v/codexa-toolkit?style=flat&color=00E5A0)](https://www.npmjs.com/package/codexa-toolkit)
 [![License: MIT](https://img.shields.io/badge/license-MIT-00E5A0)](./LICENSE)
@@ -14,14 +14,17 @@ AI pre-commit guardian. Blame-aware. Auto-fix. Learns your codebase.
 
 <!-- Add terminal demo GIF here -->
 
-Record with VHS or asciinema and convert to GIF.
-Recommended flow: codexa init -> git commit -> check fails -> codexa fix -> clean commit.
+## Two-phase workflow
+
+`codexa init` scans every supported file in the repository. Existing findings are reported and the baseline remains **not ready** until the scan is clean. Only then does Codexa write `.codexa/baseline.json` and enable incremental enforcement.
+
+After initialization, `codexa check` evaluates the staged Git index snapshot, not unstaged working-tree edits. Findings already represented by the baseline remain historical context and do not block unrelated changes; new findings still go through configured policy.
 
 ## Why Codexa
 
 - Blame-aware: only your errors block commits. Pre-existing issues are visible, never blocking.
 - Auto-fix: codexa fix command applies applicable fixes. Fewer context switches, fewer bypasses.
-- Learns: .codexa/patterns.json remembers accepted fixes and prioritizes them next time.
+- Deterministic: findings are normalized, fingerprinted, sorted, and emitted through the same policy path for local and CI checks.
 
 ## Quick Start - Solo
 
@@ -29,7 +32,17 @@ Recommended flow: codexa init -> git commit -> check fails -> codexa fix -> clea
 npm install -g codexa-toolkit
 cd your-project
 codexa init
+# Resolve all reported issues, then verify the clean baseline.
+codexa init
 git add . && git commit -m "first protected commit"
+
+# Daily workflow
+git add path/to/changed-file.js
+codexa check
+git commit -m "change"
+
+# Explicitly accept a reviewed set of findings as the new baseline.
+codexa baseline update
 ```
 
 ## Quick Start - Team
@@ -53,7 +66,7 @@ codexa init
 | -------------------------- | ---- | ---------- |
 | Blame-aware linting        | Y    | Y          |
 | Auto-fix                   | Y    | Y          |
-| AI suggestions (Ollama)    | Y    | Y          |
+| Code quality enforcement   | Y    | Y          |
 | .codexa/ learning folder   | Y    | Y (shared) |
 | Clean commit streak        | Y    | -          |
 | codexa report + sparklines | Y    | -          |
@@ -106,12 +119,27 @@ Minimal codexa.config.json:
 
 Full reference: [docs/configuration.md](./docs/configuration.md)
 
+## `.codexaignore`
+
+Codexa combines Git's built-in exclusions with repository-local `.codexaignore` patterns. Patterns are root-relative, support `*` globs, and are applied after built-in exclusions. Ignored files are not discovered during the initial scan or incremental checks.
+
+## Hooks, fixes, and CI
+
+`codexa init` resolves the active hook directory through Git, including `core.hooksPath` and worktrees. Existing `pre-commit` hooks are preserved and run before Codexa; uninstall restores them. Autofixes operate on working-tree files and must be staged again before commit. CI uses the same normalized findings and policy, and supports JSON and SARIF output.
+
+## Development
+
+```bash
+npm install
+npm test
+npm run lint
+```
+
 ## Requirements
 
 - Node.js >= 18
 - Git >= 2.0
 - Python + ruff (for Python repos)
-- Ollama (optional, for AI suggestions)
 
 ## Contributing
 

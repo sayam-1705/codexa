@@ -5,29 +5,24 @@ import {
   removeAdapter,
   getEnabledAdapters,
 } from '../src/plugins/registry.js';
-import { existsSync, rmSync } from 'fs';
-import { homedir } from 'os';
+import { existsSync, rmSync, mkdirSync } from 'fs';
+import { tmpdir } from 'os';
 import { resolve } from 'path';
 
 describe('Adapter Registry', () => {
-  const registryPath = resolve(homedir(), '.codexa', 'adapters.json');
+  let testHomeDir;
 
   beforeEach(() => {
-    // Clean up registry before each test
-    if (existsSync(registryPath)) {
-      try {
-        rmSync(registryPath, { force: true });
-      } catch (e) {
-        // Ignore
-      }
-    }
+    testHomeDir = resolve(tmpdir(), `codexa-registry-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(testHomeDir, { recursive: true });
+    process.env.CODEXA_HOME = testHomeDir;
   });
 
   afterEach(() => {
-    // Clean up after tests
-    if (existsSync(registryPath)) {
+    delete process.env.CODEXA_HOME;
+    if (testHomeDir && existsSync(testHomeDir)) {
       try {
-        rmSync(registryPath, { force: true });
+        rmSync(testHomeDir, { recursive: true, force: true });
       } catch (e) {
         // Ignore
       }

@@ -1,49 +1,73 @@
-import { writeFileSync, readFileSync, chmodSync, existsSync, rmSync } from 'fs';
-import { join } from 'path';
+import { writeFileSync, readFileSync, chmodSync, existsSync, rmSync, renameSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
+import { gitPath } from './command.js';
 
-const HOOK_HEADER = '# codexa-managed — do not remove this line';
+const CODEXA_START = '# codexa-managed: start';
+const CODEXA_END = '# codexa-managed: end';
 
-const HOOK_SCRIPT = `#!/bin/sh
-# codexa-managed — do not remove this line
-npx codexa check
-if [ $? -ne 0 ]; then
-  exit 1
+function shellQuote(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+
+function hookPath(repoPath) {
+  return resolve(repoPath, gitPath(repoPath, 'hooks'), 'pre-commit');
+}
+
+function originalPath(path) {
+  return `${path}.codexa-original`;
+}
+
+function hookScript(backup) {
+  const chain = backup ? `
+if [ -x ${shellQuote(backup)} ]; then
+  ${shellQuote(backup)} "$@"
+  status=$?
+  if [ $status -ne 0 ]; then exit $status; fi
 fi
+` : '';
+  return `#!/bin/sh
+# codexa-managed — do not remove this line
+${CODEXA_START}${chain}
+npx --no-install codexa check
+status=$?
+${CODEXA_END}
+exit $status
 `;
+}
 
 export function installHook(repoPath) {
-  const hookPath = join(repoPath, '.git', 'hooks', 'pre-commit');
-
-  // Create hooks directory if it doesn't exist
-  const hooksDir = join(repoPath, '.git', 'hooks');
-  if (!existsSync(hooksDir)) {
-    throw new Error(`Cannot install hook: ${hooksDir} does not exist`);
+  const path = hookPath(repoPath);
+  mkdirSync(dirname(path), { recursive: true });
+  let backup;
+  if (existsSync(path)) {
+    const content = readFileSync(path, 'utf8');
+    if (content.includes(CODEXA_START)) return path;
+    backup = originalPath(path);
+    if (!existsSync(backup)) renameSync(path, backup);
   }
-
-  writeFileSync(hookPath, HOOK_SCRIPT);
-  chmodSync(hookPath, 0o755);
+  writeFileSync(path, hookScript(backup), 'utf8');
+  chmodSync(path, 0o755);
+  return path;
 }
 
 export function removeHook(repoPath) {
-  const hookPath = join(repoPath, '.git', 'hooks', 'pre-commit');
-
-  if (!existsSync(hookPath)) {
+  const path = hookPath(repoPath);
+  if (!existsSync(path)) {
     return; // Hook doesn't exist, nothing to remove
   }
 
-  const content = readFileSync(hookPath, 'utf8');
-  if (content.includes(HOOK_HEADER)) {
-    rmSync(hookPath);
+  const content = readFileSync(path, 'utf8');
+  if (content.includes(CODEXA_START)) {
+    rmSync(path);
+    const backup = originalPath(path);
+    if (existsSync(backup)) renameSync(backup, path);
   }
 }
 
 export function isHookInstalled(repoPath) {
-  const hookPath = join(repoPath, '.git', 'hooks', 'pre-commit');
-
-  if (!existsSync(hookPath)) {
+  const path = hookPath(repoPath);
+  if (!existsSync(path)) {
     return false;
   }
-
-  const content = readFileSync(hookPath, 'utf8');
-  return content.includes(HOOK_HEADER);
+  return readFileSync(path, 'utf8').includes(CODEXA_START);
 }

@@ -5,7 +5,7 @@ import chalk from 'chalk';
  * Shows errors in a readable format
  */
 export function renderSimpleUI(result) {
-  const { blocking, warnings, minor, preexisting, streakDisplay, result: resultStatus } = result;
+  const { blocking, warnings, minor, streakDisplay } = result;
 
   // Header
   const totalIssues = blocking.length + warnings.length + minor.length;

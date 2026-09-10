@@ -91,7 +91,7 @@ codexa explain <file>:<line>
 
 Description:
 
-Explains an issue at a specific source location and can include AI-assisted context when Ollama is available. Use this command to understand why a rule triggered and how to resolve it.
+Explains an issue at a specific source location using the configured analyzer output.
 
 Flags:
 
@@ -444,7 +444,7 @@ Removes Codexa from the repository (hook, config, .codexa/ data).
 Flags:
 
 - `--yes` (boolean) Skip confirmation prompts.
-- `--purge-global` (boolean) Also remove ~/.codexa (adapter registry, AI cache) — affects ALL repos.
+- `--purge-global` (boolean) Also remove ~/.codexa adapter registry — affects ALL repos.
 
 ## codexa doctor
 
@@ -457,7 +457,7 @@ codexa doctor --strict
 
 Description:
 
-Check environment for issues (Node version, git hook, config, linters, AI, permissions).
+Check environment for issues (Node version, git hook, config, linters, and permissions).
 
 Flags:
 
@@ -494,5 +494,4 @@ codexa check --help
 ## Environment Variables
 
 - `CODEXA_HOME` — Override config directory (default: `~/.codexa`)
-- `OLLAMA_HOST` — Override Ollama connection (default: `http://localhost:11434`)
 - `NODE_ENV` — Set to `test` to skip some validations

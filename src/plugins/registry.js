@@ -6,10 +6,13 @@
 import { homedir } from 'os';
 import { resolve, dirname } from 'path';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { loadAdapter } from './loader.js';
 
-const REGISTRY_PATH = resolve(homedir(), '.codexa', 'adapters.json');
+function getRegistryPath() {
+  const baseDir = process.env.CODEXA_HOME || resolve(homedir(), '.codexa');
+  return resolve(baseDir, 'adapters.json');
+}
 
 // Hardcoded community registry - updated when new CLI versions ship
 const COMMUNITY_REGISTRY = [
@@ -25,13 +28,14 @@ const COMMUNITY_REGISTRY = [
  * @returns {Object} - Registry object
  */
 export function loadRegistry() {
-  if (existsSync(REGISTRY_PATH)) {
+  const registryPath = getRegistryPath();
+  if (existsSync(registryPath)) {
     try {
-      const content = readFileSync(REGISTRY_PATH, 'utf8');
+      const content = readFileSync(registryPath, 'utf8');
       return JSON.parse(content);
     } catch (err) {
       console.error(
-        `Could not read adapter registry at ${REGISTRY_PATH}: ${err.message}\n` +
+        `Could not read adapter registry at ${registryPath}: ${err.message}\n` +
         'Fix: delete the corrupted file and run codexa list-languages to regenerate defaults.'
       );
       // Fall through to initialize default
@@ -60,8 +64,12 @@ export function loadRegistry() {
   };
 
   // Ensure directory exists
-  mkdirSync(dirname(REGISTRY_PATH), { recursive: true });
-  writeFileSync(REGISTRY_PATH, JSON.stringify(defaultRegistry, null, 2), 'utf8');
+  try {
+    mkdirSync(dirname(registryPath), { recursive: true });
+    writeFileSync(registryPath, JSON.stringify(defaultRegistry, null, 2), 'utf8');
+  } catch (err) {
+    // Gracefully continue with in-memory defaultRegistry in read-only environments
+  }
 
   return defaultRegistry;
 }
@@ -71,8 +79,9 @@ export function loadRegistry() {
  * @param {Object} registry - Registry object to save
  */
 function saveRegistry(registry) {
-  mkdirSync(dirname(REGISTRY_PATH), { recursive: true });
-  writeFileSync(REGISTRY_PATH, JSON.stringify(registry, null, 2), 'utf8');
+  const registryPath = getRegistryPath();
+  mkdirSync(dirname(registryPath), { recursive: true });
+  writeFileSync(registryPath, JSON.stringify(registry, null, 2), 'utf8');
 }
 
 /**
@@ -91,11 +100,11 @@ export async function getEnabledAdapters() {
     try {
       return await loadAdapter(packageName);
     } catch (err) {
-      console.error(
-        `Failed to load adapter '${entry.name}': ${err.message}\n` +
-        `Fix: reinstall it with codexa add-language ${entry.package}.`
+      throw new Error(
+        `Failed to load enabled adapter '${entry.name}': ${err.message}. ` +
+        `Fix: reinstall it with codexa add-language ${entry.package}.`,
+        { cause: err }
       );
-      return null;
     }
   });
 
@@ -113,7 +122,7 @@ export async function installAdapter(packageName) {
   // Install globally
   try {
     console.log(`Installing ${packageName} from npm...`);
-    execSync(`npm install -g ${packageName}`, {
+    execFileSync('npm', ['install', '--no-save', '--prefix', resolve(process.env.CODEXA_HOME || resolve(homedir(), '.codexa'), 'packages'), packageName], {
       stdio: 'inherit',
     });
   } catch (err) {
@@ -130,7 +139,7 @@ export async function installAdapter(packageName) {
   } catch (err) {
     // Uninstall on validation failure
     try {
-      execSync(`npm uninstall -g ${packageName}`, { stdio: 'ignore' });
+      execFileSync('npm', ['uninstall', '--no-save', '--prefix', resolve(process.env.CODEXA_HOME || resolve(homedir(), '.codexa'), 'packages'), packageName], { stdio: 'ignore' });
     } catch (e) {
       // Ignore uninstall errors
     }

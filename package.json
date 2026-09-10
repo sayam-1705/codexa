@@ -1,9 +1,9 @@
 {
   "name": "codexa-toolkit",
   "version": "1.1.1",
-  "description": "AI pre-commit guardian. Blame-aware. Auto-fix. Learns.",
+  "description": "Blame-aware pre-commit guardian with deterministic linting and verified autofix.",
   "type": "module",
-  "main": "src/index.js",
+  "main": "bin/codexa.js",
   "bin": {
     "codexa": "bin/codexa.js"
   },
@@ -24,8 +24,6 @@
     "git-hooks",
     "eslint",
     "ruff",
-    "ai",
-    "ollama",
     "typescript",
     "python",
     "code-quality"
@@ -58,6 +56,6 @@
     "typescript": "^5.0.0"
   },
   "devDependencies": {
-    "vitest": "^1.6.0"
+    "vitest": "^5.0.0"
   }
 }

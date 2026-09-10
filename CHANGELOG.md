@@ -13,13 +13,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - `codexa fix <loc>` command to programmatically trigger fixes.
 - `team.blockThreshold` config to customize strict blocking behavior.
 - SARIF format support for CI output (`ci.outputFormat = "sarif"`).
-- `ai.enabled` configuration toggle to disable Ollama/AI probing.
 
 ### Changed
 - ESLint integration now shares a single process-cached instance for massive speedups.
 - CLI output replaces interactive React/Ink TUI with pure terminal text.
 - TypeScript parsing is now active by default in all projects.
-- `codexa explain` explicitly gates behind the `ai.enabled` config.
 
 ### Fixed
 - Fixed JS adapter crashes on browser globals by integrating `globals` package.

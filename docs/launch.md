@@ -14,14 +14,12 @@ What makes it different:
 
 - Blame engine separates newly introduced issues from pre-existing debt.
 - Learning folder (`.codexa/`) remembers accepted fixes and reuses patterns.
-- AI suggestions run locally through Ollama for offline-friendly workflows.
 
 Technical details:
 
 - Node.js CLI
 - Ink TUI
 - ESLint and ruff profiles
-- Ollama local inference
 
 Call to action:
 

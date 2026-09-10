@@ -4,14 +4,8 @@ import { resolve } from 'path';
 import { tmpdir } from 'os';
 
 // Mock heavy modules
-vi.mock('../src/ai/ollama.js', () => ({
-  isOllamaAvailable: vi.fn(() => false),
-  getAvailableModels: vi.fn(() => []),
-  selectBestModel: vi.fn(() => null),
-}));
-
 vi.mock('../src/team/config.js', () => ({
-  loadConfig: vi.fn(async () => ({ blameMode: 'strict', ai: { enabled: true } })),
+  loadConfig: vi.fn(async () => ({ blameMode: 'strict' })),
 }));
 
 vi.mock('../src/core/runner.js', () => ({

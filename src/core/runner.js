@@ -4,9 +4,10 @@ import { buildChangedLinesMap } from './blame.js';
 import { getDb, logRun } from '../solo/db.js';
 import { getCurrentStreak, getStreakDisplay } from '../solo/streak.js';
 import { updateSummary } from '../team/summary.js';
-import { execSync } from 'child_process';
+import { runGit } from '../git/command.js';
+import { materializeIndexFiles } from '../git/diff.js';
 
-export async function runLinter(stagedFiles, repoPath = process.cwd(), config = {}) {
+async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config = {}, snapshot = null) {
   if (!stagedFiles || !stagedFiles.length) {
     return {
       blocking: [],
@@ -16,6 +17,8 @@ export async function runLinter(stagedFiles, repoPath = process.cwd(), config = 
       runId: null,
       streak: 0,
       streakDisplay: '✓ Ready to commit',
+      filesChecked: 0,
+      durationMs: 0,
     };
   }
 
@@ -33,13 +36,15 @@ export async function runLinter(stagedFiles, repoPath = process.cwd(), config = 
       runId: null,
       streak: 0,
       streakDisplay: '✓ Ready to commit',
+      filesChecked: stagedFiles.length,
+      durationMs: 0,
     };
   }
 
   // Run each adapter on its matching files in parallel
   const lintPromises = adapters.map(async (adapter) => {
     // Filter files to adapter's supported extensions
-    const adapterFiles = stagedFiles.filter((file) =>
+    const adapterFiles = (snapshot?.files || stagedFiles).filter((file) =>
       adapter.extensions.some((ext) => file.endsWith(ext))
     );
 
@@ -56,10 +61,12 @@ export async function runLinter(stagedFiles, repoPath = process.cwd(), config = 
   // Run all linters in parallel
   const lintResults = await Promise.all([...lintPromises, Promise.resolve(changedLinesMap)]);
   const changedLinesMapResult = lintResults[lintResults.length - 1];
-  const rawErrors = lintResults.slice(0, -1).flat();
+  const rawErrors = lintResults.slice(0, -1).flat().map(error => snapshot ? snapshot.mapFinding(error) : error);
 
   // Classify errors by severity and blame
   const classified = await classifyErrors(rawErrors, changedLinesMapResult, config);
+  classified.filesChecked = stagedFiles.length;
+  classified.durationMs = Date.now() - startTime;
 
   // Calculate stats for logging
   const errorsBlocked = classified.blocking.length;
@@ -109,8 +116,8 @@ export async function runLinter(stagedFiles, repoPath = process.cwd(), config = 
 
     // Update team summary (non-blocking)
     try {
-      const authorEmail = execSync('git config user.email', { cwd: repoPath, encoding: 'utf8' }).trim();
-      const authorName = execSync('git config user.name', { cwd: repoPath, encoding: 'utf8' }).trim();
+      const authorEmail = runGit(['config', 'user.email'], repoPath).trim();
+      const authorName = runGit(['config', 'user.name'], repoPath).trim();
 
       const runResult = {
         commit_allowed: commitAllowed,
@@ -140,4 +147,14 @@ export async function runLinter(stagedFiles, repoPath = process.cwd(), config = 
   }
 
   return classified;
+}
+
+export async function runLinter(stagedFiles, repoPath = process.cwd(), config = {}) {
+  if (config.snapshot !== 'index') return runLinterInternal(stagedFiles, repoPath, config);
+  const snapshot = await materializeIndexFiles(repoPath, stagedFiles);
+  try {
+    return await runLinterInternal(stagedFiles, repoPath, config, snapshot);
+  } finally {
+    snapshot.cleanup();
+  }
 }

@@ -32,8 +32,6 @@ src/core contains lint orchestration, classification, schema, and blame-aware ru
 
 src/git contains git integration such as staged diff retrieval and pre-commit hook lifecycle. Keep shell interactions bounded and failure messages actionable.
 
-src/ai contains Ollama integration, prompts, and caching for AI suggestions. This layer must gracefully degrade when Ollama is unavailable.
-
 src/learning contains learned history and pattern matching helpers used to prioritize recurring fixes over time.
 
 src/plugins contains adapter contracts, dynamic loading, and registry management for built-in and community language support.

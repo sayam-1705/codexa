@@ -16,6 +16,7 @@ const JS_RULES = {
     'no-unreachable',
     'no-unsafe-finally',
     'use-before-define',
+    'parse-error',
     '@typescript-eslint/no-explicit-any',
     '@typescript-eslint/ban-ts-comment',
     'import/no-unresolved',
@@ -32,7 +33,6 @@ const JS_RULES = {
     'prefer-promise-reject-errors',
     '@typescript-eslint/no-floating-promises',
     '@typescript-eslint/await-thenable',
-    'parse-error',
   ],
   [SEVERITIES.MINOR]: [
     'prefer-const',

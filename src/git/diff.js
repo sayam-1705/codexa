@@ -1,33 +1,39 @@
 import { simpleGit } from 'simple-git';
-import { resolve } from 'path';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { dirname, relative, resolve } from 'path';
+import { tmpdir } from 'os';
+import { runGit, repositoryRoot } from './command.js';
 
 export async function getStagedFiles(repoPath) {
-  const git = simpleGit(repoPath);
+  const root = repositoryRoot(repoPath);
+  return runGit(['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z', '--'], root)
+    .split('\0')
+    .filter(Boolean)
+    .map(file => resolve(root, file));
+}
 
-  // Get staged files using git diff --cached --name-only
-  const output = await git.diff(['--cached', '--name-only']);
-
-  if (!output.trim()) {
-    return [];
+export async function materializeIndexFiles(repoPath, files) {
+  const root = repositoryRoot(repoPath);
+  const directory = mkdtempSync(resolve(tmpdir(), 'codexa-index-'));
+  const mapping = new Map();
+  try {
+    for (const file of files) {
+      const relativePath = relative(root, resolve(file));
+      const target = resolve(directory, relativePath);
+      mkdirSync(dirname(target), { recursive: true });
+      const content = runGit(['show', `:${relativePath}`], root, { encoding: 'buffer' });
+      writeFileSync(target, content);
+      mapping.set(target, resolve(file));
+    }
+  } catch (error) {
+    rmSync(directory, { recursive: true, force: true });
+    throw new Error(`Could not materialize staged content: ${error.message}`);
   }
-
-  const files = output
-    .split('\n')
-    .filter(f => f.trim())
-    .map(f => resolve(repoPath, f));
-
-  // Filter out deleted files
-  const git2 = simpleGit(repoPath);
-  const deletedOutput = await git2.diff(['--cached', '--name-only', '--diff-filter=D']);
-
-  const deletedSet = new Set(
-    deletedOutput
-      .split('\n')
-      .filter(f => f.trim())
-      .map(f => resolve(repoPath, f))
-  );
-
-  return files.filter(f => !deletedSet.has(f));
+  return {
+    files: [...mapping.keys()],
+    mapFinding: finding => ({ ...finding, file: mapping.get(finding.file) || finding.file }),
+    cleanup: () => rmSync(directory, { recursive: true, force: true }),
+  };
 }
 
 export async function getChangedLines(repoPath, filePath) {

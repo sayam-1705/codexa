@@ -1,5 +1,6 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { execSync } from 'child_process';
+import { readFileSync, writeFileSync, existsSync, realpathSync } from 'fs';
+import { execFileSync } from 'child_process';
+import { relative, resolve, sep } from 'path';
 
 import { buildEslintOptions } from '../profiles/eslintConfig.js';
 
@@ -16,6 +17,15 @@ export async function applyFix(error) {
         diff: null,
         message: 'File not found',
       };
+    }
+
+    if (error.repoPath) {
+      const root = realpathSync(resolve(error.repoPath));
+      const target = realpathSync(resolve(error.file));
+      const relativeTarget = relative(root, target);
+      if (relativeTarget === '..' || relativeTarget.startsWith(`..${sep}`)) {
+        return { success: false, diff: null, message: 'Fix target is outside the repository' };
+      }
     }
 
     if (error.language === 'javascript' || error.language === 'typescript') {
@@ -91,7 +101,7 @@ async function fixWithRuff(error) {
     const ruffCode = error.rule.toUpperCase();
 
     try {
-      execSync(`ruff check --fix --select ${ruffCode} "${filePath}"`, {
+      execFileSync('ruff', ['check', '--fix', '--select', ruffCode, filePath], {
         stdio: 'pipe',
       });
     } catch (e) {
@@ -162,7 +172,7 @@ export async function relintFile(filePath, language) {
       const results = await eslint.lintFiles([filePath]);
       return results[0]?.messages || [];
     } else if (language === 'python') {
-      const output = execSync(`ruff check --output-format=json "${filePath}"`, {
+      const output = execFileSync('ruff', ['check', '--output-format=json', filePath], {
         encoding: 'utf8',
         stdio: ['pipe', 'pipe', 'ignore'],
       });

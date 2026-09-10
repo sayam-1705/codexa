@@ -57,20 +57,14 @@ export async function statsCommand() {
     lines.push(`  Errors fixed:        ${String(lifetime.total_fixes_accepted || 0).padEnd(6)}`);
     lines.push('');
 
-    // Fixes & AI
+    // Fixes & Patterns
     lines.push('  ─────────────────────────────────────────────────────────');
-    lines.push('  FIXES & LEARNING');
+    lines.push('  FIXES & PATTERNS');
     lines.push('  ─────────────────────────────────────────────────────────');
     lines.push(
       `  Fixes accepted:      ${String(lifetime.total_fixes_accepted || 0).padEnd(6)}`
     );
-    lines.push(`  AI queries:          ${String(lifetime.total_ai_queries || 0).padEnd(6)}`);
     lines.push(`  Pattern hits:        ${String(lifetime.total_pattern_hits || 0).padEnd(6)}`);
-    const patternEfficiency =
-      lifetime.total_ai_queries && lifetime.total_pattern_hits
-        ? Math.round((lifetime.total_pattern_hits / (lifetime.total_ai_queries + lifetime.total_pattern_hits)) * 100)
-        : 0;
-    lines.push(`  Pattern hit rate:    ${patternEfficiency}%`);
     lines.push('');
 
     // Performance

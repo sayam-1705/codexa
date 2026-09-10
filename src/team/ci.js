@@ -1,9 +1,12 @@
 import { runLinter } from '../core/runner.js';
-import { execSync } from 'child_process';
-import { readdirSync, statSync } from 'fs';
-import { resolve, relative } from 'path';
+import { runGit } from '../git/command.js';
+import { readFileSync } from 'fs';
+import { relative } from 'path';
+import { getStagedFiles } from '../git/diff.js';
+import { discoverSupportedFiles } from '../core/files.js';
+import { filterBaselineFindings, loadBaseline } from '../core/baseline.js';
 
-const CODEXA_VERSION = '1.0.0';
+const CODEXA_VERSION = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
 
 /**
  * Run Codexa in CI mode.
@@ -19,7 +22,7 @@ export async function runCICheck(repoPath, config, options = {}) {
 
     if (allFiles) {
       // Get all supported files from repo
-      stagedFiles = getAllSupportedFiles(repoPath);
+      stagedFiles = await discoverSupportedFiles(repoPath, config);
 
       if (baseBranch) {
         // Filter to only changed files in diff
@@ -27,11 +30,13 @@ export async function runCICheck(repoPath, config, options = {}) {
       }
     } else {
       // Get staged files (default git check mode)
-      stagedFiles = getStagedFiles(repoPath);
+      stagedFiles = await getStagedFiles(repoPath);
     }
 
     // Run linter
-    const classified = await runLinter(stagedFiles, repoPath, config);
+    const baseline = loadBaseline(repoPath);
+    const scanConfig = allFiles ? config : { ...config, snapshot: 'index' };
+    const classified = filterBaselineFindings(await runLinter(stagedFiles, repoPath, scanConfig), repoPath, baseline);
 
     // Format output
     let output;
@@ -98,7 +103,7 @@ export function formatCIOutput(result, repoPath, config) {
     codexa: CODEXA_VERSION,
     timestamp: new Date().toISOString(),
     repo: repoPath,
-    branch: getCurrentBranch(),
+    branch: getCurrentBranch(repoPath),
     result: status,
     failOn: config.ci.failOn,
     blocking: result.blocking || [],
@@ -137,7 +142,7 @@ export function formatCIOutput(result, repoPath, config) {
   return output;
 }
 
-export function formatSarifOutput(result, repoPath, config) {
+export function formatSarifOutput(result) {
   const allErrors = [
     ...result.blocking,
     ...result.warnings,
@@ -195,78 +200,17 @@ export function formatSarifOutput(result, repoPath, config) {
 
 // Helper functions
 
-function getStagedFiles(repoPath) {
-  try {
-    const output = execSync('git diff --cached --name-only', {
-      cwd: repoPath,
-      encoding: 'utf8',
-    });
-    return output.split('\n').filter((f) => f.length > 0);
-  } catch (err) {
-    return [];
-  }
-}
-
-function getAllSupportedFiles(repoPath) {
-  const extensions = [
-    '.js',
-    '.jsx',
-    '.ts',
-    '.tsx',
-    '.py',
-    '.mjs',
-    '.cjs',
-    '.d.ts',
-  ];
-  const files = [];
-
-  function walk(dir) {
-    try {
-      const entries = readdirSync(dir);
-
-      for (const entry of entries) {
-        const fullPath = resolve(dir, entry);
-        const stat = statSync(fullPath);
-        const ext = entry.substring(entry.lastIndexOf('.'));
-
-        if (stat.isDirectory()) {
-          if (!['.git', 'node_modules', 'dist', 'build', '.codexa'].includes(entry)) {
-            walk(fullPath);
-          }
-        } else if (extensions.includes(ext)) {
-          files.push(relative(repoPath, fullPath));
-        }
-      }
-    } catch (err) {
-      // Ignore read errors
-    }
-  }
-
-  walk(repoPath);
-  return files;
-}
-
 function getChangedFiles(repoPath, baseBranch, allFiles) {
-  try {
     const target = baseBranch.startsWith('origin/') ? baseBranch : `origin/${baseBranch}`;
-    const output = execSync(`git diff ${target}...HEAD --name-only`, {
-      cwd: repoPath,
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const output = runGit(['diff', `${target}...HEAD`, '--name-only'], repoPath);
     const changedSet = new Set(output.split('\n').filter((f) => f.length > 0));
-    return allFiles.filter((f) => changedSet.has(f));
-  } catch (err) {
-    return allFiles;
-  }
+    return allFiles.filter(file => changedSet.has(relative(repoPath, file).replace(/\\/g, '/')));
 }
 
-function getCurrentBranch() {
+function getCurrentBranch(repoPath) {
   try {
-    return execSync('git rev-parse --abbrev-ref HEAD', {
-      encoding: 'utf8',
-    }).trim();
-  } catch (err) {
+    return runGit(['rev-parse', '--abbrev-ref', 'HEAD'], repoPath).trim();
+  } catch (error) {
     return 'unknown';
   }
 }

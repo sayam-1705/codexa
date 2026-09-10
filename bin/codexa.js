@@ -6,11 +6,6 @@ import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import ora from 'ora';
 import chalk from 'chalk';
-import {
-  isOllamaAvailable,
-  getAvailableModels,
-  selectBestModel,
-} from '../src/ai/ollama.js';
 import { loadConfig } from '../src/team/config.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
@@ -20,22 +15,9 @@ async function printVersion() {
   const nodeVersion = process.version;
   const adapterNames = listAdapters().installed.map((a) => a.name).join(', ') || 'none';
 
-  let aiStatus = 'Ollama not running';
-  const config = await loadConfig(process.cwd()).catch(() => ({}));
-  if (config.ai?.enabled === false) {
-    aiStatus = 'AI disabled by config';
-  } else if (await isOllamaAvailable()) {
-    const models = await getAvailableModels();
-    const selected = await selectBestModel(models);
-    aiStatus = selected
-      ? `Ollama connected (${selected})`
-      : 'Ollama connected (no models found)';
-  }
-
   console.log(`codexa ${CLI_VERSION}`);
   console.log(`Node.js ${nodeVersion}`);
   console.log(`Adapters: ${adapterNames}`);
-  console.log(`AI: ${aiStatus}`);
 }
 
 
@@ -48,20 +30,6 @@ if (rawArgs.length === 1 && (rawArgs[0] === '-v' || rawArgs[0] === '--version'))
 
 
 
-// loadConfig is now imported from src/team/config.js (async, full validation)
-// Kept as a lightweight sync fallback for internal module paths that cannot await:
-function loadConfigSync(repoPath) {
-  const configPath = join(repoPath, 'codexa.config.json');
-  if (!existsSync(configPath)) {
-    return { blameMode: 'strict' };
-  }
-  try {
-    return JSON.parse(readFileSync(configPath, 'utf8'));
-  } catch (err) {
-    return { blameMode: 'strict' };
-  }
-}
-
 async function checkCommand(options) {
   const repoPath = process.cwd();
 
@@ -70,6 +38,7 @@ async function checkCommand(options) {
     const { runLinter } = await import('../src/core/runner.js');
     const { renderResults } = await import('../src/tui/renderer.js');
     const { runCICheck } = await import('../src/team/ci.js');
+    const { filterBaselineFindings, loadBaseline } = await import('../src/core/baseline.js');
 
     // Load config
     const config = await loadConfig(repoPath);
@@ -93,7 +62,8 @@ async function checkCommand(options) {
 
     // Show spinner while linting
     const spinner = ora('Linting staged files...').start();
-    const classified = await runLinter(stagedFiles, repoPath, config);
+    const baseline = loadBaseline(repoPath);
+    const classified = filterBaselineFindings(await runLinter(stagedFiles, repoPath, { ...config, snapshot: 'index' }), repoPath, baseline);
     spinner.stop();
 
     // Only force CI mode if --ci flag is explicitly set
@@ -103,6 +73,28 @@ async function checkCommand(options) {
     await renderResults(classified, config, { ciMode });
   } catch (err) {
     console.error('Error running linters:', err.message);
+    process.exit(1);
+  }
+}
+
+async function baselineCommand(action) {
+  const repoPath = process.cwd();
+  if (action !== 'update') {
+    console.error('Usage: codexa baseline update');
+    process.exit(1);
+  }
+  try {
+    const { discoverSupportedFiles } = await import('../src/core/files.js');
+    const { runLinter } = await import('../src/core/runner.js');
+    const { saveBaseline } = await import('../src/core/baseline.js');
+    const config = await loadConfig(repoPath);
+    const files = await discoverSupportedFiles(repoPath, config);
+    const result = await runLinter(files, repoPath, config);
+    const findings = [...result.blocking, ...result.warnings, ...result.minor, ...result.preexisting];
+    const path = saveBaseline(repoPath, findings);
+    console.log(`Baseline updated with ${findings.length} finding(s): ${path}`);
+  } catch (err) {
+    console.error(`Could not update baseline: ${err.message}`);
     process.exit(1);
   }
 }
@@ -137,6 +129,11 @@ program
   .action(checkCommand);
 
 program
+  .command('baseline <action>')
+  .description('Explicitly update the repository finding baseline')
+  .action(baselineCommand);
+
+program
   .command('explain <loc>')
   .description('Explain an error at file:line')
   .action(async (loc) => {
@@ -163,40 +160,6 @@ program
     const targetLine = lines[lineNumber - 1];
     console.log(chalk.bold(`\n${match[1]}:${lineNumber}`));
     console.log(chalk.dim(targetLine));
-
-    const config = await loadConfig(process.cwd()).catch(() => loadConfigSync(process.cwd()));
-
-    try {
-      if (config.ai?.enabled !== false && await isOllamaAvailable()) {
-        const { buildPrompt } = await import('../src/ai/prompt.js');
-        const { getSuggestion } = await import('../src/ai/ollama.js');
-        const models = await getAvailableModels();
-        const model = await selectBestModel(models);
-
-        if (model) {
-          const prompt = buildPrompt(
-            {
-              file: match[1],
-              line: lineNumber,
-              message: 'Explain and suggest a fix for this line in commit-blocking context.',
-              rule: 'unknown',
-              severity: 'MODERATE',
-              language: match[1].endsWith('.py') ? 'python' : 'javascript',
-            },
-            lines
-          );
-
-          const suggestion = await getSuggestion(prompt, model);
-          if (suggestion.trim()) {
-            console.log('');
-            console.log(chalk.cyan('AI suggestion:'));
-            console.log(suggestion.trim());
-          }
-        }
-      }
-    } catch {
-      // Keep explain usable even when AI is unavailable.
-    }
   });
 
 program
@@ -412,7 +375,7 @@ program
   .command('uninstall')
   .description('Remove Codexa from this repository (hook, config, .codexa/ data)')
   .option('--yes', 'Skip confirmation prompts')
-  .option('--purge-global', 'Also remove ~/.codexa (adapter registry, AI cache) — affects ALL repos')
+  .option('--purge-global', 'Also remove ~/.codexa (adapter registry) — affects ALL repos')
   .action(async (options) => {
     const { uninstallCommand } = await import('../src/commands/uninstall.js');
     await uninstallCommand(options);
@@ -454,7 +417,7 @@ program
     }
 
     const { applyFix } = await import('../src/tui/FixEngine.js');
-    const result = await applyFix(error);
+    const result = await applyFix({ ...error, repoPath: process.cwd() });
 
     if (result.success) {
       console.log(chalk.green('✓ ' + result.message));

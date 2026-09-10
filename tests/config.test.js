@@ -134,7 +134,7 @@ describe('Config Validation', () => {
   it('checkVersionCompat is silent when versions match', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation();
 
-    const config = { _codexaSchema: '2.0.0' };
+    const config = { _codexaSchema: '1.1.1' };
     checkVersionCompat(config);
 
     expect(consoleSpy).not.toHaveBeenCalled();
@@ -200,71 +200,5 @@ node_modules/`;
     } catch (err) {
       // Test cleanup
     }
-  });
-});
-
-describe('AI Config Validation', () => {
-  it('validateConfig accepts ai.enabled: true', () => {
-    const config = {
-      version: 2,
-      blameMode: 'strict',
-      languages: ['auto'],
-      severity: { block: ['CRITICAL'], warn: ['MODERATE'], log: ['MINOR'], overrides: {} },
-      team: { blockThreshold: 1 },
-      ci: { failOn: 'CRITICAL' },
-      ai: { enabled: true, model: null },
-    };
-    const result = validateConfig(config);
-    expect(result.valid).toBe(true);
-  });
-
-  it('validateConfig accepts ai.enabled: false', () => {
-    const config = {
-      version: 2,
-      blameMode: 'strict',
-      languages: ['auto'],
-      severity: { block: ['CRITICAL'], warn: ['MODERATE'], log: ['MINOR'], overrides: {} },
-      ai: { enabled: false, model: null },
-    };
-    const result = validateConfig(config);
-    expect(result.valid).toBe(true);
-  });
-
-  it('validateConfig rejects ai.enabled as non-boolean', () => {
-    const config = {
-      version: 2,
-      blameMode: 'strict',
-      languages: ['auto'],
-      severity: { block: ['CRITICAL'], warn: ['MODERATE'], log: ['MINOR'], overrides: {} },
-      ai: { enabled: 'yes', model: null },
-    };
-    const result = validateConfig(config);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('ai.enabled'))).toBe(true);
-  });
-
-  it('validateConfig accepts ai.model as a string', () => {
-    const config = {
-      version: 2,
-      blameMode: 'strict',
-      languages: ['auto'],
-      severity: { block: ['CRITICAL'], warn: ['MODERATE'], log: ['MINOR'], overrides: {} },
-      ai: { enabled: true, model: 'llama3' },
-    };
-    const result = validateConfig(config);
-    expect(result.valid).toBe(true);
-  });
-
-  it('validateConfig rejects ai.model as a non-string non-null', () => {
-    const config = {
-      version: 2,
-      blameMode: 'strict',
-      languages: ['auto'],
-      severity: { block: ['CRITICAL'], warn: ['MODERATE'], log: ['MINOR'], overrides: {} },
-      ai: { enabled: true, model: 42 },
-    };
-    const result = validateConfig(config);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('ai.model'))).toBe(true);
   });
 });

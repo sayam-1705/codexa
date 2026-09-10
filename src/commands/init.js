@@ -2,16 +2,20 @@ import { existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import chalk from 'chalk';
 import ora from 'ora';
-import { execSync } from 'child_process';
 import { detectLanguages } from '../core/detector.js';
+import { discoverSupportedFiles } from '../core/files.js';
+import { saveBaseline } from '../core/baseline.js';
+import { repositoryRoot } from '../git/command.js';
 import { installHook, isHookInstalled } from '../git/hooks.js';
 import { loadConfig, createDefaultConfig } from '../team/config.js';
 
 export async function initCommand(options) {
   const repoPath = process.cwd();
+  let baselineReady = false;
 
-  // Check for .git folder
-  if (!existsSync(join(repoPath, '.git'))) {
+  try {
+    repositoryRoot(repoPath);
+  } catch (err) {
     console.error(chalk.red('\n✗ This folder is not a git repository.'));
     console.error(chalk.dim('  Why: Codexa installs a pre-commit hook in .git/hooks.'));
     console.error(chalk.dim('  Fix: run git init, then run codexa init again.'));
@@ -89,42 +93,27 @@ src/legacy/
     console.error(chalk.dim('  Fix: ensure .git/hooks exists and is writable.'));
   }
 
-  // Step 4: Demo lint on last commit
+  // Step 4: Establish the initial scan from the complete supported repository.
   try {
-    // Skip silently if git history is unavailable.
-    let lastCommitFiles = [];
-    try {
-      const output = execSync('git diff HEAD~1 --name-only', {
-        cwd: repoPath,
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-      lastCommitFiles = output
-        .trim()
-        .split('\n')
-        .filter(f => f.length > 0)
-        .map(f => join(repoPath, f.replace(/\\/g, '/')));
-    } catch (err) {
-      lastCommitFiles = [];
-    }
+    const config = await loadConfig(repoPath);
+    const initialFiles = await discoverSupportedFiles(repoPath, config);
 
-    if (lastCommitFiles.length > 0) {
-      const demoSpinner = ora('Running demo check on your last commit...').start();
+    if (initialFiles.length > 0) {
+      const demoSpinner = ora(`Scanning ${initialFiles.length} supported files...`).start();
       try {
         const { runLinter } = await import('../core/runner.js');
-        const config = configExists ? await loadConfig(repoPath) : {};
-        const results = await runLinter(lastCommitFiles, repoPath, config);
+        const results = await runLinter(initialFiles, repoPath, { ...config, blameMode: 'off' });
         const totalErrors = (results.blocking || []).length + (results.warnings || []).length + (results.minor || []).length;
 
         if (totalErrors > 0) {
           demoSpinner.succeed(`${totalErrors} issue${totalErrors === 1 ? '' : 's'} found`);
-          console.log(chalk.dim(`\nYour last commit had ${totalErrors} issue${totalErrors === 1 ? '' : 's'} - here is what Codexa would catch:`));
+          console.log(chalk.dim(`\nBASELINE NOT READY: ${totalErrors} issue${totalErrors === 1 ? '' : 's'} must be resolved before incremental enforcement.`));
 
           const allErrors = [
             ...(results.blocking || []),
             ...(results.warnings || []),
             ...(results.minor || []),
-          ].slice(0, 3);
+          ];
 
           for (const error of allErrors) {
             const severityColor = error.severity === 'CRITICAL' ? 'red' : error.severity === 'MODERATE' ? 'yellow' : 'green';
@@ -135,26 +124,33 @@ src/legacy/
             console.log(`${sev} ${chalk.cyan(`${relFile}:${error.line}`)} ${chalk.dim(error.rule)}`);
           }
 
-          if (totalErrors > 3) {
-            console.log(chalk.dim(`... and ${totalErrors - 3} more`));
-          }
-
-          console.log(chalk.dim('Run git commit to trigger Codexa on your next commit.'));
+          console.log(chalk.dim('Resolve the issues, then run codexa init again to verify the baseline.'));
+          process.exitCode = 1;
         } else {
-          demoSpinner.succeed('Your last commit was clean. Nice work.');
+          saveBaseline(repoPath, []);
+          baselineReady = true;
+          demoSpinner.succeed('BASELINE READY: the supported repository scan is clean.');
         }
       } catch (err) {
-        // Demo is best-effort and should not interrupt init output.
+        demoSpinner.fail('Initial scan failed');
+        throw new Error(`Initial scan failed: ${err.message}`);
       }
     }
   } catch (err) {
-    // Silently skip demo on error.
+    console.error(chalk.red(`\n✗ ${err.message}`));
+    console.error(chalk.dim('  Fix: resolve the analyzer or Git error, then rerun codexa init.'));
+    process.exitCode = 1;
+  }
+
+  if (baselineReady === false && process.exitCode !== 1) {
+    saveBaseline(repoPath, []);
+    baselineReady = true;
   }
 
   // Final summary box
   console.log('');
   console.log(chalk.cyan('╔══════════════════════════════════════╗'));
-  console.log(chalk.cyan('║  Codexa is ready.                   ║'));
+  console.log(chalk.cyan(`║  ${baselineReady ? 'Codexa is ready.' : 'Baseline is not ready.'}                 ║`));
   console.log(chalk.cyan('║                                     ║'));
   console.log(chalk.cyan('║  Stage files and commit to begin.   ║'));
   console.log(chalk.cyan('║  Every commit is now protected.     ║'));

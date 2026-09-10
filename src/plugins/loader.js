@@ -1,7 +1,5 @@
 /**
- * Dynamic adapter loader with error wrapping
- * A crashing community adapter must never crash Codexa
- * All three methods are wrapped in try-catch with safe fallbacks
+ * Dynamic adapter loader with contextual error handling.
  */
 
 import { validateAdapter } from './interface.js';
@@ -69,11 +67,7 @@ export async function loadAdapter(packageNameOrPath) {
     try {
       return await originalLint(files, config);
     } catch (err) {
-      console.error(
-        `[${adapterModule.name || 'unknown'}] lint() error:`,
-        err.message
-      );
-      return [];
+      throw new Error(`[${adapterModule.name || 'unknown'}] lint() failed: ${err.message}`, { cause: err });
     }
   };
 

@@ -79,12 +79,11 @@ export async function reportCommand(options) {
     lines.push(`  Best:     ${streak.best}-commit streak (${streak.level})`);
     lines.push('');
 
-    // AI & Patterns
-    if (trend.lifetime.total_ai_queries > 0 || trend.lifetime.total_pattern_hits > 0) {
+    // Patterns
+    if (trend.lifetime.total_pattern_hits > 0) {
       lines.push('  ─────────────────────────────────────────────────────────');
-      lines.push('  AI & PATTERNS');
+      lines.push('  PATTERNS');
       lines.push('  ─────────────────────────────────────────────────────────');
-      lines.push(`  AI queries made:     ${String(trend.lifetime.total_ai_queries || 0).padEnd(4)}`);
       lines.push(`  Pattern hits:        ${String(trend.lifetime.total_pattern_hits || 0).padEnd(4)}`);
       lines.push('');
     }

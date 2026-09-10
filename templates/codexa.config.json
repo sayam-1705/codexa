@@ -24,7 +24,6 @@
     "name": "Engineering",
     "enforceOnCI": true,
     "blockThreshold": 1,
-    "requireModel": null,
     "allowForceCommit": true,
     "forceCommitRequiresReason": true
   },
@@ -34,5 +33,5 @@
     "failOn": "CRITICAL",
     "badge": true
   },
-  "_codexaSchema": "2.0.0"
+  "_codexaSchema": "1.1.1"
 }

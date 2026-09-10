@@ -59,7 +59,6 @@ function initializeSchema(db) {
       errors_found INTEGER DEFAULT 0,
       errors_blocked INTEGER DEFAULT 0,
       fixes_accepted INTEGER DEFAULT 0,
-      ai_queries INTEGER DEFAULT 0,
       pattern_hits INTEGER DEFAULT 0,
       commit_allowed INTEGER DEFAULT 0,
       force_commit INTEGER DEFAULT 0,
@@ -114,7 +113,6 @@ export function logRun(db, runData) {
     errorsFound,
     errorsBlocked,
     fixesAccepted = 0,
-    aiQueries = 0,
     patternHits = 0,
     commitAllowed,
     forceCommit = 0,
@@ -127,9 +125,9 @@ export function logRun(db, runData) {
   const stmt = db.prepare(`
     INSERT INTO runs (
       timestamp, repo_path, language, files_checked, errors_found,
-      errors_blocked, fixes_accepted, ai_queries, pattern_hits,
+      errors_blocked, fixes_accepted, pattern_hits,
       commit_allowed, force_commit, branch, duration_ms
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -140,7 +138,6 @@ export function logRun(db, runData) {
     errorsFound,
     errorsBlocked,
     fixesAccepted,
-    aiQueries,
     patternHits,
     commitAllowed ? 1 : 0,
     forceCommit ? 1 : 0,
@@ -265,7 +262,6 @@ export function getLifetimeStats(db, repoPath) {
       SUM(r.errors_found) as total_errors_found,
       SUM(r.errors_blocked) as total_errors_blocked,
       SUM(r.fixes_accepted) as total_fixes_accepted,
-      SUM(r.ai_queries) as total_ai_queries,
       SUM(r.pattern_hits) as total_pattern_hits,
       SUM(CASE WHEN r.commit_allowed = 1 THEN 1 ELSE 0 END) as successful_commits,
       SUM(CASE WHEN r.force_commit = 1 THEN 1 ELSE 0 END) as forced_commits,
@@ -281,23 +277,22 @@ export function getLifetimeStats(db, repoPath) {
 }
 
 /**
- * Update run stats after fixes are accepted or AI queries made.
+ * Update run stats after fixes are accepted.
  * @param {Object} db - Database connection
  * @param {number} runId - Run ID to update
- * @param {Object} updates - {fixesAccepted, aiQueries, patternHits}
+ * @param {Object} updates - {fixesAccepted, patternHits}
  */
 export function updateRunStats(db, runId, updates) {
-  const { fixesAccepted, aiQueries, patternHits } = updates;
+  const { fixesAccepted, patternHits } = updates;
 
   const stmt = db.prepare(`
     UPDATE runs
     SET fixes_accepted = COALESCE(?, fixes_accepted),
-        ai_queries = COALESCE(?, ai_queries),
         pattern_hits = COALESCE(?, pattern_hits)
     WHERE id = ?
   `);
 
-  stmt.run(fixesAccepted ?? null, aiQueries ?? null, patternHits ?? null, runId);
+  stmt.run(fixesAccepted ?? null, patternHits ?? null, runId);
 }
 
 /**

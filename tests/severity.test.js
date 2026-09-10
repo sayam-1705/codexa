@@ -25,6 +25,10 @@ describe('getSeverity', () => {
       expect(getSeverity('@typescript-eslint/ban-ts-comment', 'typescript')).toBe(SEVERITIES.CRITICAL);
     });
 
+    it('maps parser errors to CRITICAL', () => {
+      expect(getSeverity('parse-error', 'javascript')).toBe(SEVERITIES.CRITICAL);
+    });
+
     it('maps prettier rules to MINOR', () => {
       expect(getSeverity('prettier/indent', 'javascript')).toBe(SEVERITIES.MINOR);
     });

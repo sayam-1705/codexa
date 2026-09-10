@@ -43,7 +43,6 @@ export function logCommitCheck(repoPath, summary) {
       errorsFound: summary.errorsFound || 0,
       errorsBlocked: summary.errorsBlocked || 0,
       fixesAccepted: summary.fixesAccepted || 0,
-      aiQueriesMade: summary.aiQueriesMade || 0,
       patternHits: summary.patternHits || 0,
       commitAllowed: summary.commitAllowed || false,
     };

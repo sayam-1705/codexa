@@ -17,5 +17,6 @@ describe('SARIF Output', () => {
     expect(sarif.runs[0].results).toHaveLength(2);
     expect(sarif.runs[0].results[0].level).toBe('error');
     expect(sarif.runs[0].results[1].level).toBe('warning');
+    expect(sarif.runs[0].results[0].locations[0].physicalLocation.artifactLocation.uri).toBe('test.js');
   });
 });

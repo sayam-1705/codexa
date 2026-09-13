@@ -5,6 +5,7 @@ import { execFileSync } from 'child_process';
 import chalk from 'chalk';
 import { loadConfig } from '../team/config.js';
 import { isHookInstalled } from '../git/hooks.js';
+import { getBaselineVersion } from '../core/baseline.js';
 
 function check(label, condition, info = '') {
   if (condition) {
@@ -54,7 +55,19 @@ export async function doctorCommand(options) {
     allPassed &= check('ESLint resolvable and config works', false, err.message);
   }
 
-  // 6. ruff on PATH
+  // 6. Baseline format
+  try {
+    const baselineVersion = getBaselineVersion(repoPath);
+    if (baselineVersion === 1) {
+      console.warn(chalk.yellow('! Legacy baseline format detected: run codexa baseline update after reviewing existing findings.'));
+    } else {
+      check('Baseline format current', true, baselineVersion ? `v${baselineVersion}` : 'Not created yet');
+    }
+  } catch (err) {
+    allPassed &= check('Baseline format readable', false, err.message);
+  }
+
+  // 7. ruff on PATH
   try {
     const ruffVersion = execFileSync('ruff', ['--version'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
     check('ruff available (Python linter)', true, ruffVersion);
@@ -62,7 +75,7 @@ export async function doctorCommand(options) {
     check('ruff available (Python linter)', false, 'Not found on PATH');
   }
 
-  // 7. .codexa writable
+  // 8. .codexa writable
   const codexaDir = resolve(repoPath, '.codexa');
   if (existsSync(codexaDir)) {
     try {
@@ -75,7 +88,7 @@ export async function doctorCommand(options) {
     check('.codexa/ directory writable', true, 'Does not exist yet');
   }
 
-  // 8. adapters.json readable
+  // 9. adapters.json readable
   const globalDir = process.env.CODEXA_HOME || resolve(homedir(), '.codexa');
   const adaptersPath = resolve(globalDir, 'adapters.json');
   if (existsSync(adaptersPath)) {

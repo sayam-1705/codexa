@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3]
+
+### Fixed
+- Load the documented JSON configuration and preserve legacy baselines during fingerprint upgrades.
+- Correct analytics database access, portable SARIF paths, CLI digest wiring, and recursive language detection.
+- Correct the GitHub Actions template to install `codexa-toolkit` and honor `ci.postPRComment`.
+
+## [1.1.2]
+
+### Changed
+- Consolidate the mainline implementation into the next release after the divergent `v1.1.2` tag.
+- Include team summaries, baseline management, CI/SARIF output, and adapter registry improvements.
+
 ## [1.1.0]
 
 ### Added

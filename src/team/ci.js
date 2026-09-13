@@ -2,6 +2,7 @@ import { runLinter } from '../core/runner.js';
 import { runGit } from '../git/command.js';
 import { readFileSync } from 'fs';
 import { relative } from 'path';
+import { isAbsolute } from 'path';
 import { getStagedFiles } from '../git/diff.js';
 import { discoverSupportedFiles } from '../core/files.js';
 import { filterBaselineFindings, loadBaseline } from '../core/baseline.js';
@@ -142,7 +143,7 @@ export function formatCIOutput(result, repoPath, config) {
   return output;
 }
 
-export function formatSarifOutput(result) {
+export function formatSarifOutput(result, repoPath = process.cwd()) {
   const allErrors = [
     ...result.blocking,
     ...result.warnings,
@@ -168,7 +169,7 @@ export function formatSarifOutput(result) {
         {
           physicalLocation: {
             artifactLocation: {
-              uri: error.file
+              uri: (isAbsolute(error.file) ? relative(repoPath, error.file) : error.file).replace(/\\/g, '/')
             },
             region: {
               startLine: error.line || 1,

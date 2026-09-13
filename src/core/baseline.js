@@ -7,9 +7,20 @@ function normalizedMessage(message) {
 }
 
 export function fingerprintFinding(finding, repoPath) {
+  return fingerprintWithLine(finding, repoPath);
+}
+
+function fingerprintWithLine(finding, repoPath) {
   const file = String(finding.file || '').replace(/\\/g, '/');
   const relativeFile = file.startsWith(`${repoPath}/`) ? file.slice(repoPath.length + 1) : file;
   const identity = [relativeFile, finding.line || 0, finding.rule, finding.code || '', normalizedMessage(finding.message)].join('\0');
+  return createHash('sha256').update(identity).digest('hex');
+}
+
+function legacyFingerprint(finding, repoPath) {
+  const file = String(finding.file || '').replace(/\\/g, '/');
+  const relativeFile = file.startsWith(`${repoPath}/`) ? file.slice(repoPath.length + 1) : file;
+  const identity = [relativeFile, finding.rule, finding.code || '', normalizedMessage(finding.message)].join('\0');
   return createHash('sha256').update(identity).digest('hex');
 }
 
@@ -35,12 +46,21 @@ export function saveBaseline(repoPath, findings) {
 
 export function filterBaselineFindings(classified, repoPath, baseline) {
   if (!baseline) return classified;
-  const filter = findings => findings.filter(finding => !baseline.has(fingerprintFinding(finding, repoPath)));
+  const isBaselineFinding = finding =>
+    baseline.has(fingerprintWithLine(finding, repoPath)) || baseline.has(legacyFingerprint(finding, repoPath));
+  const filter = findings => findings.filter(finding => !isBaselineFinding(finding));
   return {
     ...classified,
     blocking: filter(classified.blocking),
     warnings: filter(classified.warnings),
     minor: filter(classified.minor),
-    preexisting: [...classified.preexisting, ...classified.blocking.filter(finding => baseline.has(fingerprintFinding(finding, repoPath)))],
+    preexisting: [...classified.preexisting, ...classified.blocking.filter(isBaselineFinding)],
   };
+}
+
+export function getBaselineVersion(repoPath) {
+  const path = baselinePath(repoPath);
+  if (!existsSync(path)) return null;
+  const data = JSON.parse(readFileSync(path, 'utf8'));
+  return data.version ?? 1;
 }

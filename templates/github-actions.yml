@@ -27,7 +27,13 @@ jobs:
         run: npm install
 
       - name: Install Codexa
-        run: npm install -g codexa
+        run: npm install -g codexa-toolkit@latest
+
+      - name: Read Codexa configuration
+        id: config
+        run: |
+          POST_PR_COMMENT=$(node -e "const fs=require('fs'); const p='codexa.config.json'; const c=fs.existsSync(p) ? JSON.parse(fs.readFileSync(p)) : {}; process.stdout.write(String(c.ci?.postPRComment ?? true))")
+          echo "post_pr_comment=$POST_PR_COMMENT" >> "$GITHUB_OUTPUT"
 
       - name: Install Python linters
         run: pip install ruff
@@ -53,7 +59,7 @@ jobs:
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
       - name: Post PR comment
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.config.outputs.post_pr_comment == 'true'
         uses: actions/github-script@v7
         with:
           script: |

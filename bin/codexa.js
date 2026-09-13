@@ -301,14 +301,17 @@ program
 
       if (community.length > 0) {
         console.log('');
-        console.log(chalk.bold('KNOWN COMMUNITY ADAPTERS  not installed'));
+        console.log(chalk.bold('COMMUNITY ADAPTERS'));
         for (const adapter of community) {
-          console.log(`${adapter.package.padEnd(25)} ${adapter.linter}`);
+          const status = adapter.status === 'not-published'
+            ? chalk.yellow('not published')
+            : chalk.dim('available');
+          console.log(`${adapter.package.padEnd(25)} ${adapter.linter.padEnd(18)} ${status}`);
         }
       }
 
       console.log('');
-      console.log('Install: codexa add-language <package-name>');
+      console.log('Install a published package: codexa add-language <package-name>');
       console.log(chalk.dim('════════════════════════════════════════════'));
     } catch (err) {
       console.error(chalk.red(`✗ ${err.message}`));

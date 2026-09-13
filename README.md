@@ -80,11 +80,15 @@ codexa init
 ## Supported Languages
 
 - Built-in: JavaScript, TypeScript, Python
-- Community adapters:
+- Planned community adapters (not published on npm yet): Go, Rust, Ruby, and Java. Use the [adapter authoring guide](./docs/plugin-authoring.md) to create or publish one.
+
+Codexa can install any published package that implements the adapter interface:
 
 ```bash
-codexa add-language codexa-adapter-go
+codexa add-language <published-adapter-package>
 ```
+
+Python linting is supported, but its adapter does not provide automatic fixes; `codexa fix` reports those cases without changing files.
 
 ## Configuration
 

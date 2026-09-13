@@ -122,7 +122,7 @@ describe('Team Summary', () => {
     expect(summary.contributors['alice@example.com'].blockedRuns).toBe(1);
   });
 
-  it.skip('updateSummary counts all error types toward totalErrorsFound', () => {
+  it('updateSummary counts all error types toward totalErrorsFound', () => {
     const tmpDir = createTestDir();
     const runResult = {
       commit_allowed: false,
@@ -227,7 +227,7 @@ describe('Team Summary', () => {
     expect(leaderboard.length).toBe(10);
   });
 
-  it.skip('updateSummary updates codebase.totalRuns', () => {
+  it('updateSummary updates codebase.totalRuns', () => {
     const tmpDir = createTestDir();
     const runResult = {
       commit_allowed: true,

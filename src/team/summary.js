@@ -24,7 +24,7 @@ export function loadSummary(repoPath) {
   const summaryPath = resolve(repoPath, SUMMARY_PATH);
 
   if (!existsSync(summaryPath)) {
-    return { ...EMPTY_SUMMARY };
+    return structuredClone(EMPTY_SUMMARY);
   }
 
   try {
@@ -32,7 +32,7 @@ export function loadSummary(repoPath) {
     return JSON.parse(content);
   } catch (err) {
     console.error(`Failed to parse summary: ${err.message}`);
-    return { ...EMPTY_SUMMARY };
+    return structuredClone(EMPTY_SUMMARY);
   }
 }
 

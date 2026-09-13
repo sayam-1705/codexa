@@ -20,7 +20,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - TypeScript parsing is now active by default in all projects.
 
 ### Fixed
-- Fixed JS adapter crashes on browser globals by integrating `globals` package.
+- Fixed JS adapter crashes on browser globals by enabling browser globals in the ESLint configuration.
 - Fixed severe JS parse errors being swallowed; they are now logged as MODERATE blocking errors.
 - Fixed atomic writing bug in `src/team/summary.js`.
 

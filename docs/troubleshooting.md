@@ -38,13 +38,14 @@ codexa init
 
 ### `No supported languages detected`
 
-**Cause**: Project uses languages not yet installed (Go, Rust, etc.)
+**Cause**: Project uses a language without a built-in or published adapter.
 
 **Fix**:
 ```bash
-# Install adapter for your language
-codexa add-language codexa-adapter-go
-codexa add-language codexa-adapter-rust
+# Check the adapter catalog. Planned entries are marked "not published".
+codexa list-languages
+# Install a published adapter package when one is available.
+codexa add-language <published-adapter-package>
 
 # Then re-run init
 codexa init
@@ -199,22 +200,18 @@ codexa dashboard
 
 ## Adapters
 
-### `Cannot find adapter: codexa-adapter-go`
+### `Cannot find adapter`
 
-**Cause**: Adapter not installed or npm installation failed
+**Cause**: The package is not installed, or the adapter package has not been published to npm.
 
 **Fix**:
 ```bash
-# Try manual installation
-npm install -g codexa-adapter-go
-
-# Or reinstall from registry
 codexa list-languages
-codexa add-language codexa-adapter-go
-
-# Verify it's installed
-codexa list-languages | grep go
+# Install a package shown as available
+codexa add-language <published-adapter-package>
 ```
+
+The Go, Rust, Ruby, and Java names currently shown in the community list are planned adapters, not published npm packages. To build one, see [plugin authoring](./plugin-authoring.md).
 
 ---
 

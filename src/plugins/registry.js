@@ -16,10 +16,10 @@ function getRegistryPath() {
 
 // Hardcoded community registry - updated when new CLI versions ship
 const COMMUNITY_REGISTRY = [
-  { name: 'go', package: 'codexa-adapter-go', linter: 'golangci-lint' },
-  { name: 'rust', package: 'codexa-adapter-rust', linter: 'clippy' },
-  { name: 'ruby', package: 'codexa-adapter-ruby', linter: 'RuboCop' },
-  { name: 'java', package: 'codexa-adapter-java', linter: 'Checkstyle' },
+  { name: 'go', package: 'codexa-adapter-go', linter: 'golangci-lint', status: 'not-published' },
+  { name: 'rust', package: 'codexa-adapter-rust', linter: 'clippy', status: 'not-published' },
+  { name: 'ruby', package: 'codexa-adapter-ruby', linter: 'RuboCop', status: 'not-published' },
+  { name: 'java', package: 'codexa-adapter-java', linter: 'Checkstyle', status: 'not-published' },
 ];
 
 /**
@@ -119,6 +119,14 @@ export async function getEnabledAdapters() {
  * @throws {Error} - If installation or validation fails
  */
 export async function installAdapter(packageName) {
+  const communityEntry = COMMUNITY_REGISTRY.find((entry) => entry.package === packageName);
+  if (communityEntry?.status === 'not-published') {
+    throw new Error(
+      `${packageName} is listed as a planned community adapter but is not published on npm yet. ` +
+      'Use the adapter template in templates/adapter-template or install a published adapter package.'
+    );
+  }
+
   // Install globally
   try {
     console.log(`Installing ${packageName} from npm...`);

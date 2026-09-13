@@ -33,7 +33,7 @@ export async function initCommand(options) {
       detectSpinner.succeed(`Detected: ${languages.map(l => chalk.cyan(l)).join('  ')}`);
     } else {
       detectSpinner.warn('No JS/TS/Python files detected.');
-      console.log(chalk.dim('  Install a language adapter: codexa add-language codexa-adapter-go'));
+      console.log(chalk.dim('  See docs/plugin-authoring.md to add a community adapter.'));
     }
   } catch (err) {
     detectSpinner.warn('Detection skipped');

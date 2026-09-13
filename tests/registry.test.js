@@ -3,6 +3,7 @@ import {
   loadRegistry,
   listAdapters,
   removeAdapter,
+  installAdapter,
   getEnabledAdapters,
 } from '../src/plugins/registry.js';
 import { existsSync, rmSync, mkdirSync } from 'fs';
@@ -63,8 +64,14 @@ describe('Adapter Registry', () => {
     const { community } = listAdapters();
 
     expect(community.length).toBeGreaterThan(0);
-    expect(community.some((c) => c.name === 'go')).toBe(true);
-    expect(community.some((c) => c.name === 'rust')).toBe(true);
+    expect(community.find((c) => c.name === 'go')).toMatchObject({ status: 'not-published' });
+    expect(community.find((c) => c.name === 'rust')).toMatchObject({ status: 'not-published' });
+  });
+
+  it('rejects planned adapters before attempting npm installation', async () => {
+    await expect(installAdapter('codexa-adapter-go')).rejects.toThrow(
+      'is listed as a planned community adapter but is not published on npm yet'
+    );
   });
 
   it('removeAdapter throws when removing a built-in adapter', () => {

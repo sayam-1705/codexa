@@ -363,9 +363,10 @@ Flags:
 Examples:
 
 ```bash
-codexa add-language codexa-adapter-go
-codexa add-language codexa-adapter-rust
+codexa add-language <published-adapter-package>
 ```
+
+The built-in Go, Rust, Ruby, and Java entries are planned community adapters and are not published on npm yet. `codexa list-languages` marks them accordingly.
 
 Exit codes:
 

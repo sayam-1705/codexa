@@ -51,7 +51,7 @@ export function generateDigest(repoPath) {
 
   // Calculate stats
   const failureRate =
-    weekly.runs > 0
+    weekly.errors > 0
       ? Math.round(((weekly.errors - weekly.fixes) / weekly.errors) * 100)
       : 0;
 
@@ -67,7 +67,7 @@ export function generateDigest(repoPath) {
       runsExecuted: weekly.runs,
       errorsFound: weekly.errors,
       errorsCritical: errorBreakdown.critical,
-      errorsModearte: errorBreakdown.moderate,
+      errorsModerate: errorBreakdown.moderate,
       errorsMinor: errorBreakdown.minor,
       fixesAccepted: weekly.fixes,
       patternHits: weekly.patternHits,
@@ -108,7 +108,7 @@ export function printDigest(repoPath) {
     `  ✓ Commits checked:     ${String(digest.stats.runsExecuted).padEnd(3)} runs`,
     `  ✖ Errors found:        ${String(digest.stats.errorsFound).padEnd(3)} total`,
     `    ├─ Critical:         ${String(digest.stats.errorsCritical).padEnd(3)}`,
-    `    ├─ Moderate:         ${String(digest.stats.errorsModearte).padEnd(3)}`,
+    `    ├─ Moderate:         ${String(digest.stats.errorsModerate).padEnd(3)}`,
     `    └─ Minor:            ${String(digest.stats.errorsMinor).padEnd(3)}`,
     '',
     `  🔧 Fixes accepted:     ${String(digest.stats.fixesAccepted).padEnd(3)} (${digest.stats.fixRate}%)`,

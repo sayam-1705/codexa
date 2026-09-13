@@ -44,10 +44,18 @@ const DEFAULT_CONFIG = {
  * @returns {Object} - Merged and validated config
  */
 export async function loadConfig(repoPath) {
-  const explorer = cosmiconfig('codexa');
+  const explorer = cosmiconfig('codexa', {
+    searchPlaces: [
+      'codexa.config.json',
+      'codexa.config.js',
+      'codexa.config.cjs',
+      'codexa.config.mjs',
+      'package.json',
+    ],
+  });
   const result = await explorer.search(repoPath);
 
-  let config = { ...DEFAULT_CONFIG };
+  let config = structuredClone(DEFAULT_CONFIG);
 
   if (result && result.config) {
     // Deep merge found config over defaults

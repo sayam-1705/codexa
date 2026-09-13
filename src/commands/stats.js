@@ -1,4 +1,4 @@
-import { getLifetimeStats, getErrorFrequency } from '../solo/trends.js';
+import { getDb, getLifetimeStats, getErrorFrequency } from '../solo/db.js';
 import { getStreakData } from '../solo/streak.js';
 import { getImprovementScore, getWeeklySummary } from '../solo/trends.js';
 import { renderGauge } from '../solo/sparkline.js';
@@ -12,8 +12,9 @@ export async function statsCommand() {
 
   try {
     // Fetch data
-    const lifetime = getLifetimeStats(repoPath);
-    const topErrors = getErrorFrequency(repoPath, 365); // All time
+    const db = getDb();
+    const lifetime = getLifetimeStats(db, repoPath);
+    const topErrors = getErrorFrequency(db, repoPath, 365); // All time
     const streak = getStreakData(repoPath);
     const improvement = getImprovementScore(repoPath);
     const weekly = getWeeklySummary(repoPath);

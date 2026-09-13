@@ -9,7 +9,7 @@ function normalizedMessage(message) {
 export function fingerprintFinding(finding, repoPath) {
   const file = String(finding.file || '').replace(/\\/g, '/');
   const relativeFile = file.startsWith(`${repoPath}/`) ? file.slice(repoPath.length + 1) : file;
-  const identity = [relativeFile, finding.rule, finding.code || '', normalizedMessage(finding.message)].join('\0');
+  const identity = [relativeFile, finding.line || 0, finding.rule, finding.code || '', normalizedMessage(finding.message)].join('\0');
   return createHash('sha256').update(identity).digest('hex');
 }
 
@@ -29,7 +29,7 @@ export function saveBaseline(repoPath, findings) {
   const path = baselinePath(repoPath);
   mkdirSync(resolve(repoPath, '.codexa'), { recursive: true });
   const fingerprints = [...new Set(findings.map(finding => fingerprintFinding(finding, repoPath)))].sort();
-  writeFileSync(path, `${JSON.stringify({ version: 1, fingerprints }, null, 2)}\n`, 'utf8');
+  writeFileSync(path, `${JSON.stringify({ version: 2, fingerprints }, null, 2)}\n`, 'utf8');
   return path;
 }
 

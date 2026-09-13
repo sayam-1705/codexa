@@ -7,9 +7,10 @@ import { getDb, getDailyErrorCounts, getErrorFrequency, getLifetimeStats } from 
  * @returns {Object} - Trend data including daily counts, top rules, etc.
  */
 export function getTrendData(repoPath, days = 30) {
-  const dailyCounts = getDailyErrorCounts(repoPath, days);
-  const errorFreq = getErrorFrequency(repoPath, days);
-  const lifetime = getLifetimeStats(repoPath);
+  const db = getDb();
+  const dailyCounts = getDailyErrorCounts(db, repoPath, days);
+  const errorFreq = getErrorFrequency(db, repoPath, days);
+  const lifetime = getLifetimeStats(db, repoPath);
 
   // Calculate metrics
   const totalErrors = dailyCounts.reduce((sum, d) => sum + (d.count || 0), 0);
@@ -39,7 +40,8 @@ export function getTrendData(repoPath, days = 30) {
  * @returns {Array} - Array of {rule, count, severity, percentage}
  */
 export function getTopRecurringErrors(repoPath, limit = 5, days = 30) {
-  const errorFreq = getErrorFrequency(repoPath, days);
+  const db = getDb();
+  const errorFreq = getErrorFrequency(db, repoPath, days);
 
   const total = errorFreq.reduce((sum, e) => sum + e.count, 0);
 

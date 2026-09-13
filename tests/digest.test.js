@@ -80,6 +80,7 @@ describe('Weekly Digest', () => {
     expect(digest).toHaveProperty('streak');
     expect(digest.stats.runsExecuted).toBe(5);
     expect(digest.stats.errorsFound).toBe(10);
+    expect(digest.stats.errorsModerate).toBe(5);
   });
 
   it('should calculate fix rate percentage', () => {

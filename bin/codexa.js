@@ -158,8 +158,15 @@ program
     }
 
     const targetLine = lines[lineNumber - 1];
+    const { findErrorAtLocation } = await import('../src/core/locate.js');
+    const error = await findErrorAtLocation(filePath, lineNumber);
     console.log(chalk.bold(`\n${match[1]}:${lineNumber}`));
-    console.log(chalk.dim(targetLine));
+    if (error) {
+      console.log(chalk.red(`${error.rule || 'unknown'}: ${error.message}`));
+      console.log(chalk.dim(targetLine));
+    } else {
+      console.log(chalk.yellow('No Codexa finding at this location.'));
+    }
   });
 
 program
@@ -230,7 +237,9 @@ program
 program
   .command('config <subcommand> [args...]')
   .description('Manage Codexa configuration')
-  .action(async (subcommand, args) => {
+  .option('--team', 'Create a team configuration')
+  .option('--force', 'Overwrite an existing configuration')
+  .action(async (subcommand, args, command) => {
     const {
       configValidateCommand,
       configShowCommand,
@@ -238,7 +247,7 @@ program
       configSetCommand,
     } = await import('../src/commands/config.js');
 
-    const options = {};
+    const options = typeof command?.opts === 'function' ? command.opts() : { ...command };
     for (const arg of args) {
       if (arg.startsWith('--')) {
         options[arg.slice(2)] = true;
@@ -346,6 +355,14 @@ program
   .action(async (options) => {
     const { reportCommand } = await import('../src/commands/report.js');
     await reportCommand(options);
+  });
+
+program
+  .command('digest')
+  .description('Show the weekly coding digest when due')
+  .action(async () => {
+    const { printDigest } = await import('../src/solo/digest.js');
+    printDigest(process.cwd());
   });
 
 program

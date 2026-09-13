@@ -15,7 +15,7 @@ const CODEXA_VERSION = JSON.parse(readFileSync(new URL('../../package.json', imp
  * @param {Object} options - { allFiles, baseBranch, outputFormat }
  */
 export async function runCICheck(repoPath, config, options = {}) {
-  const { allFiles, baseBranch } = options;
+  const { allFiles, baseBranch, outputFormat } = options;
 
   try {
     let stagedFiles = [];
@@ -40,7 +40,7 @@ export async function runCICheck(repoPath, config, options = {}) {
 
     // Format output
     let output;
-    if (config.ci && config.ci.outputFormat === 'sarif') {
+    if ((outputFormat || config.ci?.outputFormat) === 'sarif') {
       output = formatSarifOutput(classified, repoPath, config);
     } else {
       output = formatCIOutput(classified, repoPath, config);

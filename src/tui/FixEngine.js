@@ -1,6 +1,17 @@
-import { readFileSync, writeFileSync, existsSync, realpathSync } from 'fs';
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  realpathSync,
+  lstatSync,
+  statSync,
+  mkdtempSync,
+  rmSync,
+  renameSync,
+  chmodSync,
+} from 'fs';
 import { execFileSync } from 'child_process';
-import { relative, resolve, sep } from 'path';
+import { dirname, relative, resolve, sep, basename, join } from 'path';
 
 import { buildEslintOptions } from '../profiles/eslintConfig.js';
 import { savePattern } from '../learning/patterns.js';
@@ -20,13 +31,28 @@ export async function applyFix(error) {
       };
     }
 
-    if (error.repoPath) {
-      const root = realpathSync(resolve(error.repoPath));
-      const target = realpathSync(resolve(error.file));
-      const relativeTarget = relative(root, target);
-      if (relativeTarget === '..' || relativeTarget.startsWith(`..${sep}`)) {
-        return { success: false, diff: null, message: 'Fix target is outside the repository' };
-      }
+    if (error.language !== 'javascript' && error.language !== 'typescript' && error.language !== 'python') {
+      return {
+        success: false,
+        diff: null,
+        message: 'Auto-fix not supported for this language',
+      };
+    }
+
+    if (!error.repoPath) {
+      return { success: false, diff: null, message: 'Repository root is required for auto-fix' };
+    }
+
+    const root = realpathSync(resolve(error.repoPath));
+    const targetPath = resolve(error.file);
+    const targetStats = lstatSync(targetPath);
+    if (!targetStats.isFile() || targetStats.isSymbolicLink()) {
+      return { success: false, diff: null, message: 'Fix target must be a regular file' };
+    }
+    const target = realpathSync(targetPath);
+    const relativeTarget = relative(root, target);
+    if (relativeTarget === '..' || relativeTarget.startsWith(`..${sep}`) || relativeTarget === '') {
+      return { success: false, diff: null, message: 'Fix target is outside the repository' };
     }
 
     if (error.language === 'javascript' || error.language === 'typescript') {
@@ -53,19 +79,30 @@ export async function applyFix(error) {
  * Fix using ESLint Node.js API
  */
 async function fixWithEslint(error) {
+  let tempDir;
   try {
     const { ESLint } = await import('eslint');
     const filePath = error.file;
     const before = readFileSync(filePath, 'utf8');
+    const mode = statSync(filePath).mode & 0o7777;
 
     const eslint = new ESLint(buildEslintOptions({ rule: error.rule, fix: true }));
 
-    const results = await eslint.lintFiles([filePath]);
+    const results = await eslint.lintText(before, { filePath });
 
     // Check if ESLint made changes
     if (results[0] && results[0].output) {
-      const after = results[0].output;
-      writeFileSync(filePath, after, 'utf8');
+      const after = preserveNewlineStyle(before, results[0].output);
+      const verification = await verifyEslintContent(ESLint, after, filePath, error.rule);
+      if (!verification.verified) {
+        return { success: false, diff: null, message: verification.message };
+      }
+
+      tempDir = mkdtempSync(join(dirname(filePath), `.${basename(filePath)}.codexa-`));
+      const tempPath = join(tempDir, basename(filePath));
+      writeFileSync(tempPath, after, { encoding: 'utf8', mode });
+      chmodSync(tempPath, mode);
+      renameSync(tempPath, filePath);
 
       const diff = computeDiff(before, after);
       saveAcceptedPattern(error, before, after);
@@ -87,6 +124,8 @@ async function fixWithEslint(error) {
       diff: null,
       message: `ESLint error: ${err.message}`,
     };
+  } finally {
+    if (tempDir) rmSync(tempDir, { recursive: true, force: true });
   }
 }
 
@@ -94,25 +133,38 @@ async function fixWithEslint(error) {
  * Fix using ruff command-line
  */
 async function fixWithRuff(error) {
+  let tempDir;
   try {
     const filePath = error.file;
     const before = readFileSync(filePath, 'utf8');
+    const mode = statSync(filePath).mode & 0o7777;
+    tempDir = mkdtempSync(join(dirname(filePath), `.${basename(filePath)}.codexa-`));
+    const tempPath = join(tempDir, basename(filePath));
+    writeFileSync(tempPath, before, { encoding: 'utf8', mode });
+    chmodSync(tempPath, mode);
 
     // Map error.rule to ruff rule code (e.g., 'E501', 'F841')
     // For now, assume error.rule is already a ruff code
     const ruffCode = error.rule.toUpperCase();
 
     try {
-      execFileSync('ruff', ['check', '--fix', '--select', ruffCode, filePath], {
+      execFileSync('ruff', ['check', '--fix', '--select', ruffCode, tempPath], {
         stdio: 'pipe',
       });
     } catch (e) {
       // ruff returns exit code 1 even on successful fixes, so don't fail here
     }
 
-    const after = readFileSync(filePath, 'utf8');
+    const after = preserveNewlineStyle(before, readFileSync(tempPath, 'utf8'));
 
     if (before !== after) {
+      const verification = verifyRuffContent(tempPath, ruffCode);
+      if (!verification.verified) {
+        return { success: false, diff: null, message: verification.message };
+      }
+      writeFileSync(tempPath, after, { encoding: 'utf8', mode });
+      chmodSync(tempPath, mode);
+      renameSync(tempPath, filePath);
       const diff = computeDiff(before, after);
       saveAcceptedPattern(error, before, after);
       return {
@@ -133,7 +185,51 @@ async function fixWithRuff(error) {
       diff: null,
       message: `ruff error: ${err.message}`,
     };
+  } finally {
+    if (tempDir) rmSync(tempDir, { recursive: true, force: true });
   }
+}
+
+async function verifyEslintContent(ESLint, content, filePath, rule) {
+  const verificationEslint = new ESLint(buildEslintOptions({ rule, fix: false }));
+  const result = await verificationEslint.lintText(content, { filePath });
+  const messages = result[0]?.messages || [];
+  if (messages.some((message) => message.fatal || message.ruleId === rule)) {
+    return { verified: false, message: `ESLint verification failed for ${rule}` };
+  }
+  return { verified: true };
+}
+
+function verifyRuffContent(filePath, rule) {
+  try {
+    const output = execFileSync('ruff', ['check', '--output-format=json', '--select', rule, filePath], {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    const findings = output.trim() ? JSON.parse(output) : [];
+    return findings.length === 0
+      ? { verified: true }
+      : { verified: false, message: `Ruff verification found ${rule}` };
+  } catch (err) {
+    if (err.stdout !== undefined) {
+      try {
+        const findings = err.stdout.trim() ? JSON.parse(err.stdout) : [];
+        return findings.length === 0
+          ? { verified: true }
+          : { verified: false, message: `Ruff verification found ${rule}` };
+      } catch {
+        // Fall through to the explicit verification failure below.
+      }
+    }
+    return { verified: false, message: `Ruff verification failed: ${err.message}` };
+  }
+}
+
+function preserveNewlineStyle(before, after) {
+  if (before.includes('\r\n') && !after.includes('\r\n')) {
+    return after.replace(/\n/g, '\r\n');
+  }
+  return after;
 }
 
 function saveAcceptedPattern(error, before, after) {
@@ -194,18 +290,25 @@ export async function relintFile(filePath, language) {
       const { ESLint } = await import('eslint');
       const eslint = new ESLint(buildEslintOptions());
       const results = await eslint.lintFiles([filePath]);
-      return results[0]?.messages || [];
+      return { status: 'clean', findings: results[0]?.messages || [] };
     } else if (language === 'python') {
       const output = execFileSync('ruff', ['check', '--output-format=json', filePath], {
         encoding: 'utf8',
         stdio: ['pipe', 'pipe', 'ignore'],
       });
-      return JSON.parse(output || '[]');
+      return { status: 'clean', findings: JSON.parse(output || '[]') };
     }
   } catch (err) {
-    // Silently fail on re-lint errors
-    return [];
+    if (err.stdout !== undefined) {
+      try {
+        const findings = JSON.parse(err.stdout || '[]');
+        return { status: findings.length ? 'findings' : 'clean', findings };
+      } catch {
+        // Report malformed linter output below.
+      }
+    }
+    return { status: 'failed', findings: [], message: err.message };
   }
 
-  return [];
+  return { status: 'failed', findings: [], message: `Unsupported language: ${language}` };
 }

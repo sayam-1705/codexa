@@ -29,6 +29,7 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
 
   // Load enabled adapters
   const adapters = await getEnabledAdapters(repoPath);
+  const adapterFailures = adapters.failedAdapters || [];
 
   if (adapters.length === 0) {
     return {
@@ -52,19 +53,33 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
     );
 
     if (adapterFiles.length === 0) {
-      return [];
+      return { adapter, errors: [] };
     }
 
-    return await adapter.lint(adapterFiles, config);
+    try {
+      return { adapter, errors: await adapter.lint(adapterFiles, config) };
+    } catch (error) {
+      return {
+        adapter,
+        errors: [],
+        failure: {
+          name: adapter.name || adapter.language,
+          language: adapter.language,
+          phase: 'lint',
+          error: error.message,
+        },
+      };
+    }
   });
 
   // Get changed lines map for blame engine
   const changedLinesMap = await buildChangedLinesMap(repoPath, stagedFiles);
 
   // Run all linters in parallel
-  const lintResults = await Promise.all([...lintPromises, Promise.resolve(changedLinesMap)]);
-  const changedLinesMapResult = lintResults[lintResults.length - 1];
-  const rawErrors = lintResults.slice(0, -1).flat().map(error => snapshot ? snapshot.mapFinding(error) : error);
+  const lintResults = await Promise.all(lintPromises);
+  const changedLinesMapResult = changedLinesMap;
+  const lintFailures = lintResults.filter((result) => result.failure).map((result) => result.failure);
+  const rawErrors = lintResults.flatMap((result) => result.errors).map(error => snapshot ? snapshot.mapFinding(error) : error);
 
   // Classify errors by severity and blame
   const classified = await classifyErrors(rawErrors, changedLinesMapResult, config);
@@ -90,6 +105,7 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   classified.warnings = addPatternMatches(classified.warnings);
   classified.minor = addPatternMatches(classified.minor);
   classified.patternHits = patternHits;
+  classified.adapterFailures = [...adapterFailures, ...lintFailures];
 
   // Calculate stats for logging
   const errorsBlocked = classified.blocking.length;
@@ -165,7 +181,9 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
         fixes_accepted: 0, // Will be populated by interactive mode
       };
 
-      updateSummary(repoPath, runResult, authorEmail, authorName);
+      if (config.team?.leaderboard?.optIn === true) {
+        updateSummary(repoPath, runResult, authorEmail, authorName);
+      }
     } catch (summaryErr) {
       // Non-blocking: team summary errors should not fail the lint check
       // Silently ignore if git config not available or summary update fails

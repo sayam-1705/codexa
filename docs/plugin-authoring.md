@@ -193,7 +193,7 @@ Optional fields: `isInDiff` (default false), `blameCategory` (default 'unknown')
    ```json
    {
      "peerDependencies": {
-       "codexa-toolkit": ">=1.0.0"
+      "codexa-toolkit": ">=1.1.3"
      }
    }
    ```

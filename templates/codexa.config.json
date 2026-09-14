@@ -33,5 +33,5 @@
     "failOn": "CRITICAL",
     "badge": true
   },
-  "_codexaSchema": "1.1.1"
+  "_codexaSchema": 2
 }

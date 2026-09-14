@@ -1,6 +1,6 @@
 # CLI Reference
 
-Complete command reference for Codexa v1.0.0.
+Complete command reference for Codexa v1.1.3.
 
 ## Global Options
 

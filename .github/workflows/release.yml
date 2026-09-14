@@ -41,3 +41,21 @@ jobs:
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Generate Homebrew formula for the published tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          URL="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/v${VERSION}.tar.gz"
+          SHA256=$(curl --fail --location --silent --show-error "$URL" | sha256sum | cut -d ' ' -f 1)
+          test -n "$SHA256"
+          sed -E \
+            -e "s|archive/refs/tags/v[0-9.]+\\.tar\\.gz|archive/refs/tags/v${VERSION}.tar.gz|" \
+            -e "s|sha256 \"[0-9a-f]+\"|sha256 \"${SHA256}\"|" \
+            -e "s|assert_match \"[0-9.]+\"|assert_match \"${VERSION}\"|" \
+            Formula/codexa.rb > "codexa-${VERSION}.rb"
+
+      - name: Upload Homebrew formula
+        uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-formula
+          path: codexa-*.rb

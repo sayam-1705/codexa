@@ -65,7 +65,7 @@ codexa init
 codexa config show
 
 # Update to latest
-codexa config set version 1.0.0
+codexa config set version 2
 
 # Validate
 codexa config validate

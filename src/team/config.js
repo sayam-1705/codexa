@@ -1,5 +1,5 @@
 import { cosmiconfig } from 'cosmiconfig';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { readFile } from 'fs/promises';
 import { loadRegistry } from '../plugins/registry.js';
@@ -36,8 +36,10 @@ const DEFAULT_CONFIG = {
     failOn: 'CRITICAL',
     badge: true,
   },
-  _codexaSchema: '1.1.1',
+  _codexaSchema: 2,
 };
+
+const CURRENT_CONFIG_SCHEMA = 2;
 
 /**
  * Load and validate Codexa configuration from repo.
@@ -89,9 +91,18 @@ export async function loadConfig(repoPath) {
 export function validateConfig(config) {
   const errors = [];
 
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    return { valid: false, errors: ['configuration must be an object'] };
+  }
+
   // Check version
-  if (typeof config.version !== 'number') {
-    errors.push(`version must be a number (got: ${typeof config.version})`);
+  if (typeof config.version !== 'number' || !Number.isInteger(config.version) || config.version < 1) {
+    errors.push(`version must be a positive integer (got: ${config.version})`);
+  }
+
+  if (config._codexaSchema !== undefined &&
+      (typeof config._codexaSchema !== 'number' || !Number.isInteger(config._codexaSchema) || config._codexaSchema < 1)) {
+    errors.push(`_codexaSchema must be a positive integer (got: ${config._codexaSchema})`);
   }
 
   // Check blameMode
@@ -157,8 +168,19 @@ export function validateConfig(config) {
     }
   }
 
+  if (config.ignore !== undefined &&
+      (!Array.isArray(config.ignore) || config.ignore.some((pattern) => typeof pattern !== 'string' || !pattern.trim()))) {
+    errors.push('ignore must be an array of non-empty strings');
+  }
+
   // Check team settings
   if (config.team) {
+    if (typeof config.team !== 'object' || Array.isArray(config.team)) {
+      errors.push('team must be an object');
+    }
+    if (config.team.name !== undefined && (typeof config.team.name !== 'string' || !config.team.name.trim())) {
+      errors.push('team.name must be a non-empty string');
+    }
     if (
       typeof config.team.blockThreshold !== 'number' ||
       !Number.isInteger(config.team.blockThreshold) ||
@@ -176,6 +198,23 @@ export function validateConfig(config) {
     }
     if (config.team.forceCommitRequiresReason !== undefined && typeof config.team.forceCommitRequiresReason !== 'boolean') {
       errors.push(`team.forceCommitRequiresReason must be a boolean`);
+    }
+    if (config.team.leaderboard !== undefined) {
+      const leaderboard = config.team.leaderboard;
+      if (!leaderboard || typeof leaderboard !== 'object' || Array.isArray(leaderboard)) {
+        errors.push('team.leaderboard must be an object');
+      } else {
+        if (leaderboard.enabled !== undefined && typeof leaderboard.enabled !== 'boolean') {
+          errors.push('team.leaderboard.enabled must be a boolean');
+        }
+        if (leaderboard.optIn !== undefined && typeof leaderboard.optIn !== 'boolean') {
+          errors.push('team.leaderboard.optIn must be a boolean');
+        }
+        if (leaderboard.metrics !== undefined &&
+            (!Array.isArray(leaderboard.metrics) || leaderboard.metrics.some((metric) => typeof metric !== 'string'))) {
+          errors.push('team.leaderboard.metrics must be an array of strings');
+        }
+      }
     }
   }
 
@@ -211,12 +250,12 @@ export function validateConfig(config) {
  * @param {Object} config - Config to check
  */
 export function checkVersionCompat(config) {
-  const cliVersion = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
-  const configVersion = config._codexaSchema || '1.0.0';
+  const configVersion = config._codexaSchema || 1;
 
-  if (semverGreaterThan(configVersion, cliVersion)) {
+  const configSchemaMajor = Number.parseInt(String(configVersion), 10);
+  if (Number.isFinite(configSchemaMajor) && configSchemaMajor > CURRENT_CONFIG_SCHEMA) {
     console.warn(
-      `\x1b[33mWARNING\x1b[0m: Config schema ${configVersion} is newer than CLI ${cliVersion}`
+      `\x1b[33mWARNING\x1b[0m: Config schema ${configVersion} is newer than supported schema ${CURRENT_CONFIG_SCHEMA}`
     );
   }
 }
@@ -305,19 +344,4 @@ function deepMerge(target, source) {
   }
 
   return result;
-}
-
-function semverGreaterThan(v1, v2) {
-  const parts1 = v1.split('.').map(Number);
-  const parts2 = v2.split('.').map(Number);
-
-  for (let i = 0; i < 3; i++) {
-    const p1 = parts1[i] || 0;
-    const p2 = parts2[i] || 0;
-
-    if (p1 > p2) return true;
-    if (p1 < p2) return false;
-  }
-
-  return false;
 }

@@ -45,7 +45,7 @@ Complete field-by-field guide for codexa.config.json.
 
 ### version
 
-- Type: number
+- Type: integer
 - Default: 2
 - Allowed values: schema integer supported by current CLI
 - What it does: Identifies config schema generation so Codexa can validate compatibility and apply default merging safely. Keep this aligned with the CLI's expected schema value when editing manually.
@@ -143,7 +143,11 @@ Complete field-by-field guide for codexa.config.json.
 
 The initial `codexa init` scan covers tracked and untracked supported files while excluding Git-ignored paths, built-in directories such as `.git`, and paths matched by `.codexaignore`. A clean scan writes `.codexa/baseline.json`; a dirty scan never does. `codexa check` reads that file and evaluates only newly introduced staged findings. Update it explicitly with `codexa baseline update` after reviewing the change.
 
-`.codexaignore` patterns are repository-root relative. Directory patterns end in `/`; `*` matches path characters. Git's `.gitignore` and built-in exclusions are applied before `.codexaignore`, while explicit configuration ignores remain an analyzer-level exclusion.
+`.codexaignore` supports repository-root-relative patterns, `*` for characters within one path segment, `**` across path segments, directory patterns ending in `/`, and ordered `!` negation. Patterns without `/` match a file or directory name at any depth. Git's `.gitignore` and built-in exclusions are applied before `.codexaignore`; explicit configuration ignores are analyzer-level exclusions and are not negated by `.codexaignore`.
+
+### Local and shared state
+
+Commit `codexa.config.json`, `.codexaignore`, and `.codexa/baseline.json` when they define shared project policy. `.codexa/history.json`, analytics, lock files, and generated reports are local runtime state and should remain ignored. Contributor names and emails are only written to the team summary when `team.leaderboard.optIn` is explicitly `true`.
 
 ### team.name
 
@@ -319,13 +323,13 @@ The initial `codexa init` scan covers tracked and untracked supported files whil
 
 ```json
 {
-  "version": "1.0.0",
+  "version": 2,
   "blameMode": "strict",
   "languages": ["javascript", "python"],
   "severity": {
-    "block": "CRITICAL",
-    "warn": "MODERATE",
-    "log": "MINOR",
+    "block": ["CRITICAL"],
+    "warn": ["MODERATE"],
+    "log": ["MINOR"],
     "overrides": {
       "prefer-const": "MINOR",
       "no-debugger": "CRITICAL"
@@ -340,7 +344,7 @@ The initial `codexa init` scan covers tracked and untracked supported files whil
   "team": {
     "name": "Engineering Team",
     "enforceOnCI": true,
-    "blockThreshold": 0,
+    "blockThreshold": 1,
     "allowForceCommit": false,
     "forceCommitRequiresReason": true,
     "hotspotThreshold": 5,

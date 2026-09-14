@@ -76,11 +76,7 @@ export async function runCICheck(repoPath, config, options = {}) {
       exitCode = 1;
     }
 
-    if (process.env.CODEXA_TEST_NO_EXIT === 'true') {
-      return { ok: exitCode === 0, exitCode, output };
-    }
-
-    process.exit(exitCode);
+    return { ok: exitCode === 0, exitCode, output };
   } catch (err) {
     const errorPayload = {
       error: `CI check failed: ${err.message}`,
@@ -88,10 +84,7 @@ export async function runCICheck(repoPath, config, options = {}) {
     };
     console.error(JSON.stringify(errorPayload, null, 2));
 
-    if (process.env.CODEXA_TEST_NO_EXIT === 'true') {
-      return { ok: false, exitCode: 1, error: errorPayload };
-    }
-    process.exit(1);
+    return { ok: false, exitCode: 1, error: errorPayload };
   }
 }
 

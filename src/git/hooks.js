@@ -28,8 +28,20 @@ fi
   return `#!/bin/sh
 # codexa-managed — do not remove this line
 ${CODEXA_START}${chain}
-npx --no-install codexa check
-status=$?
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+if [ -x "$repo_root/node_modules/.bin/codexa" ]; then
+  "$repo_root/node_modules/.bin/codexa" check
+  status=$?
+elif command -v codexa >/dev/null 2>&1; then
+  codexa check
+  status=$?
+elif command -v npx >/dev/null 2>&1; then
+  npx --no-install codexa check
+  status=$?
+else
+  echo "Codexa executable not found; refusing to bypass pre-commit checks." >&2
+  exit 127
+fi
 ${CODEXA_END}
 exit $status
 `;
@@ -43,7 +55,10 @@ export function installHook(repoPath) {
     const content = readFileSync(path, 'utf8');
     if (content.includes(CODEXA_START)) return path;
     backup = originalPath(path);
-    if (!existsSync(backup)) renameSync(path, backup);
+    if (existsSync(backup)) {
+      throw new Error(`Cannot install Codexa hook: backup already exists at ${backup}`);
+    }
+    renameSync(path, backup);
   }
   writeFileSync(path, hookScript(backup), 'utf8');
   chmodSync(path, 0o755);

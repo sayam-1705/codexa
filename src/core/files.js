@@ -7,28 +7,22 @@ const BUILTIN_EXCLUDES = new Set(['.git']);
 
 function matchesIgnore(pattern, file) {
   const normalized = file.replace(/\\/g, '/');
-  const value = pattern.replace(/^\//, '').replace(/\\/g, '/');
+  const anchored = pattern.startsWith('/');
+  const value = pattern.replace(/^\//, '').replace(/\\/g, '/').replace(/\/$/, '');
   if (!value || value.startsWith('#')) return false;
 
-  const matchPattern = value.endsWith('/') ? `${value}**` : value;
-  const escaped = matchPattern.replace(/[|\\{}()[\]^$+?.]/g, '\\$&');
-  const regexSource = escaped
-    .replace(/\\\*\\\*/g, '.*')
-    .replace(/\\\*/g, '[^/]*');
+  const regexSource = value
+    .split('**')
+    .map((part) => part.replace(/[|\\{}()[\]^$+?.]/g, '\\$&').replace(/\*/g, '[^/]*'))
+    .join('.*');
   const expression = new RegExp(`^${regexSource}$`);
+  const segments = normalized.split('/');
 
-  const basename = normalized.split('/').pop();
-  const dirPrefix = normalized.includes('/') ? normalized.split('/').slice(0, -1).join('/') : '';
-
-  if (value.endsWith('/')) {
-    return normalized.startsWith(value) || normalized.includes(`/${value}`);
+  if (anchored || value.includes('/')) {
+    return expression.test(normalized) || expression.test(`${normalized}/`);
   }
 
-  return (
-    expression.test(normalized) ||
-    expression.test(basename) ||
-    (dirPrefix && new RegExp(`^${regexSource.replace(/\^\$|\$\^/g, '')}$`).test(dirPrefix))
-  );
+  return segments.some((segment) => expression.test(segment));
 }
 
 function readCodexaIgnore(root) {

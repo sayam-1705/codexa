@@ -3,8 +3,9 @@
  * Tracks every linting session in .codexa/history.json
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, mkdtempSync, renameSync, rmSync } from 'fs';
 import { resolve } from 'path';
+import { withFileLock } from '../core/fileLock.js';
 
 const CODEXA_DIR = '.codexa';
 const HISTORY_FILE = 'history.json';
@@ -32,9 +33,9 @@ export function loadHistory(repoPath) {
  * Log a commit check to history
  */
 export function logCommitCheck(repoPath, summary) {
-  try {
-    mkdirSync(resolve(repoPath, CODEXA_DIR), { recursive: true });
-
+  const historyPath = resolve(repoPath, CODEXA_DIR, HISTORY_FILE);
+  mkdirSync(resolve(repoPath, CODEXA_DIR), { recursive: true });
+  return withFileLock(historyPath, () => {
     let history = loadHistory(repoPath);
 
     const entry = {
@@ -54,13 +55,17 @@ export function logCommitCheck(repoPath, summary) {
       history = history.slice(-MAX_ENTRIES);
     }
 
-    const historyPath = resolve(repoPath, CODEXA_DIR, HISTORY_FILE);
-    writeFileSync(historyPath, JSON.stringify(history, null, 2), 'utf8');
+    const tempDir = mkdtempSync(resolve(repoPath, CODEXA_DIR, '.history-'));
+    const tempPath = resolve(tempDir, HISTORY_FILE);
+    try {
+      writeFileSync(tempPath, JSON.stringify(history, null, 2), 'utf8');
+      renameSync(tempPath, historyPath);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
 
     return entry;
-  } catch (err) {
-    throw err;
-  }
+  });
 }
 
 /**

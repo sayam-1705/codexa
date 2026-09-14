@@ -93,22 +93,32 @@ export async function getEnabledAdapters() {
   const registry = loadRegistry();
   const enabledEntries = registry.adapters.filter((a) => a.enabled !== false);
 
-  // Load all adapters in parallel
-  const loadPromises = enabledEntries.map(async (entry) => {
+  const loadResults = await Promise.all(enabledEntries.map(async (entry) => {
     const packageName =
       entry.package === 'builtin' ? `builtin:${entry.name}` : entry.package;
     try {
-      return await loadAdapter(packageName);
+      return { entry, adapter: await loadAdapter(packageName) };
     } catch (err) {
-      throw new Error(
-        `Failed to load enabled adapter '${entry.name}': ${err.message}. ` +
-        `Fix: reinstall it with codexa add-language ${entry.package}.`,
-        { cause: err }
-      );
+      return {
+        entry,
+        error: new Error(
+          `Failed to load enabled adapter '${entry.name}': ${err.message}. ` +
+          `Fix: reinstall it with codexa add-language ${entry.package}.`,
+          { cause: err }
+        ),
+      };
     }
-  });
+  }));
 
-  const adapters = await Promise.all(loadPromises);
+  const adapters = loadResults.filter((result) => result.adapter).map((result) => result.adapter);
+  const failures = loadResults
+    .filter((result) => result.error)
+    .map((result) => ({ name: result.entry.name, package: result.entry.package, error: result.error.message }));
+
+  for (const failure of failures) {
+    console.error(`[adapter:${failure.name}] ${failure.error}`);
+  }
+  Object.defineProperty(adapters, 'failedAdapters', { value: failures, enumerable: false });
   return adapters.filter(Boolean);
 }
 

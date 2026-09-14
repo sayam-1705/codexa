@@ -1,5 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, renameSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, writeFileSync, existsSync, renameSync, mkdtempSync, rmSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
+import { withFileLock } from '../core/fileLock.js';
 
 const SUMMARY_PATH = '.codexa/codexa-summary.json';
 
@@ -45,6 +46,12 @@ export function loadSummary(repoPath) {
  * @returns {Object} - Updated summary
  */
 export function updateSummary(repoPath, runResult, authorEmail, authorName) {
+  return withFileLock(resolve(repoPath, SUMMARY_PATH), () =>
+    updateSummaryUnlocked(repoPath, runResult, authorEmail, authorName)
+  );
+}
+
+function updateSummaryUnlocked(repoPath, runResult, authorEmail, authorName) {
   const summary = loadSummary(repoPath);
   const now = new Date().toISOString();
 
@@ -212,7 +219,9 @@ export function getLeaderboard(summary, metric, optInEmails = []) {
 
 function writeSummaryAtomic(repoPath, summary) {
   const summaryPath = resolve(repoPath, SUMMARY_PATH);
-  const tempPath = summaryPath + '.tmp';
+  mkdirSync(dirname(summaryPath), { recursive: true });
+  const tempDir = mkdtempSync(resolve(repoPath, '.codexa', '.summary-'));
+  const tempPath = resolve(tempDir, 'summary.json');
 
   try {
     writeFileSync(tempPath, JSON.stringify(summary, null, 2), 'utf8');
@@ -220,5 +229,7 @@ function writeSummaryAtomic(repoPath, summary) {
     renameSync(tempPath, summaryPath);
   } catch (err) {
     throw new Error(`Failed to write summary: ${err.message}`);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
   }
 }

@@ -45,11 +45,13 @@ async function checkCommand(options) {
 
     // CI mode
     if (options.ci) {
-      return await runCICheck(repoPath, config, {
+      const result = await runCICheck(repoPath, config, {
         allFiles: options.allFiles,
         baseBranch: options.base,
         outputFormat: options.output,
       });
+      process.exitCode = result.exitCode;
+      return result;
     }
 
     // Interactive mode

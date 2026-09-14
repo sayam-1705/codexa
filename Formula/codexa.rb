@@ -2,7 +2,7 @@ class Codexa < Formula
   desc "Blame-aware pre-commit guardian with verified auto-fix"
   homepage "https://codexa-toolkit.vercel.app"
   url "https://github.com/sayam-1705/codexa/archive/refs/tags/v1.1.3.tar.gz"
-  sha256 "2c846bb04a9a92e7b3f84e5bfb4b8c1a39409cbb226b17869b39b25efa0cdb7b"
+  sha256 "80d1bd34092c6d80e266bba76a92011ae2bad6ccc278635e519ab1710689d879"
   license "MIT"
 
   depends_on "node"

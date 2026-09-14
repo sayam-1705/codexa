@@ -25,6 +25,8 @@ After initialization, `codexa check` evaluates the staged Git index snapshot, no
 - Blame-aware: only your errors block commits. Pre-existing issues are visible, never blocking.
 - Auto-fix: codexa fix command applies applicable fixes. Fewer context switches, fewer bypasses.
 - Deterministic: findings are normalized, fingerprinted, sorted, and emitted through the same policy path for local and CI checks.
+- Learning: remembers accepted fixes and patterns, improves suggestions over time.
+- Team-ready: shared config, CI integration, dashboards, and hotspot detection.
 
 ## Quick Start - Solo
 
@@ -62,20 +64,29 @@ codexa init
 
 ## Features
 
-| Feature                    | Solo | Team       |
-| -------------------------- | ---- | ---------- |
-| Blame-aware linting        | Y    | Y          |
-| Auto-fix                   | Y    | Y          |
-| Code quality enforcement   | Y    | Y          |
-| .codexa/ learning folder   | Y    | Y (shared) |
-| Clean commit streak        | Y    | -          |
-| codexa report + sparklines | Y    | -          |
-| Weekly digest              | Y    | -          |
-| Shared team config         | -    | Y          |
-| GitHub Actions CI          | -    | Y          |
-| Team dashboard             | -    | Y          |
-| Hotspot detection          | -    | Y          |
-| Plugin system              | Y    | Y          |
+| Feature                          | Solo | Team |
+| -------------------------------- | ---- | ---- |
+| Blame-aware linting              | Y    | Y    |
+| Auto-fix                         | Y    | Y    |
+| Code quality enforcement         | Y    | Y    |
+| .codexa/ learning folder         | Y    | Y (shared) |
+| Clean commit streak              | Y    | -    |
+| codexa report + sparklines       | Y    | -    |
+| Weekly digest                    | Y    | -    |
+| Lifetime stats & history         | Y    | Y    |
+| Interactive fix loop             | Y    | Y    |
+| Shared team config               | -    | Y    |
+| GitHub Actions CI                | -    | Y    |
+| SARIF output format              | -    | Y    |
+| Team dashboard                   | -    | Y    |
+| Hotspot detection                | -    | Y    |
+| Plugin / adapter system          | Y    | Y    |
+| Environment health check         | Y    | Y    |
+| .codexaignore patterns           | Y    | Y    |
+| Baseline management              | Y    | Y    |
+| Baseline fingerprinting         | Y    | Y    |
+| Built-in language support        | Y    | Y    |
+| Community adapter registry       | Y    | Y    |
 
 ## Supported Languages
 

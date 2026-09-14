@@ -7,8 +7,10 @@ const npmUrl = 'https://www.npmjs.com/package/codexa-toolkit';
 const facts = [
   { label: 'Published package', value: 'codexa-toolkit on npm' },
   { label: 'CLI command', value: 'codexa' },
-  { label: 'Built-in adapters', value: 'JavaScript and Python today' },
+  { label: 'Built-in adapters', value: 'JavaScript, TypeScript, and Python' },
   { label: 'Safe fixes', value: 'Verified adapter autofix' },
+  { label: 'Output formats', value: 'JSON, SARIF, and text' },
+  { label: 'Health checks', value: 'codexa doctor included' },
 ];
 ---
 
@@ -32,7 +34,13 @@ const facts = [
 cd your-project
 codexa init
 git add .
-git commit -m "first protected commit"</pre>
+git commit -m "first protected commit"
+
+# Daily workflow
+codexa check
+codexa doctor
+codexa report --days 14
+codexa digest</pre>
     </div>
 
     <div class="panel team mono">
@@ -41,7 +49,11 @@ cd your-project
 codexa config init --team
 git add codexa.config.json .codexaignore
 git commit -m "chore(codexa): add team policy"
-codexa init</pre>
+codexa init
+
+# CI and dashboard
+codexa check --ci --output sarif
+codexa dashboard --html</pre>
     </div>
   </div>
 

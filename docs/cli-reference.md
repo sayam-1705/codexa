@@ -12,7 +12,7 @@ codexa <command> [options]
 
 Options:
 
-- `-v, --version` (boolean, default: `false`) Print Codexa version, Node.js version, adapter list, and Ollama status.
+- `-v, --version` (boolean, default: `false`) Print Codexa version, Node.js version, and adapter list.
 - `-h, --help` (boolean, default: `false`) Print command index and links to docs/issues.
 
 Exit codes:

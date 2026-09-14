@@ -116,7 +116,7 @@ describe('repository integration workflow', () => {
     const consumer = join(packageDir, 'consumer');
     mkdirSync(consumer);
     cpSync(consumerFixture, consumer, { recursive: true });
-    await execFileAsync('npm', ['install', '--offline', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
+    await execFileAsync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
       cwd: consumer,
     });
     const version = spawnSync(join(consumer, 'node_modules', '.bin', 'codexa'), ['--version'], {

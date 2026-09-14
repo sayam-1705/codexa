@@ -38,6 +38,7 @@ jobs:
         run: npm run test:integration
 
       - name: Build landing site
+        if: matrix.node-version == '22.x'
         working-directory: landing
         run: |
           npm ci

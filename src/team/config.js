@@ -137,7 +137,9 @@ export function validateConfig(config) {
   }
 
   // Check severity arrays
-  if (config.severity) {
+  if (config.severity === undefined || config.severity === null || typeof config.severity !== 'object' || Array.isArray(config.severity)) {
+    errors.push('severity must be an object');
+  } else {
     const validSeverities = ['CRITICAL', 'MODERATE', 'MINOR'];
 
     for (const key of ['block', 'warn', 'log']) {
@@ -174,9 +176,10 @@ export function validateConfig(config) {
   }
 
   // Check team settings
-  if (config.team) {
-    if (typeof config.team !== 'object' || Array.isArray(config.team)) {
+  if (config.team !== undefined) {
+    if (config.team === null || typeof config.team !== 'object' || Array.isArray(config.team)) {
       errors.push('team must be an object');
+      return { valid: false, errors };
     }
     if (config.team.name !== undefined && (typeof config.team.name !== 'string' || !config.team.name.trim())) {
       errors.push('team.name must be a non-empty string');
@@ -219,7 +222,11 @@ export function validateConfig(config) {
   }
 
   // Check CI settings
-  if (config.ci) {
+  if (config.ci !== undefined) {
+    if (config.ci === null || typeof config.ci !== 'object' || Array.isArray(config.ci)) {
+      errors.push('ci must be an object');
+      return { valid: false, errors };
+    }
     const validFailOn = ['CRITICAL', 'MODERATE', 'any'];
     if (!validFailOn.includes(config.ci.failOn)) {
       errors.push(

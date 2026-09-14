@@ -28,8 +28,9 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   const startTime = Date.now();
 
   // Load enabled adapters
-  const adapters = await getEnabledAdapters(repoPath);
-  const adapterFailures = adapters.failedAdapters || [];
+  const loadedAdapters = await getEnabledAdapters(repoPath);
+  const adapterFailures = loadedAdapters.failedAdapters || [];
+  const adapters = selectAdapters(loadedAdapters, config.languages);
 
   if (adapters.length === 0) {
     return {
@@ -201,6 +202,18 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   }
 
   return classified;
+}
+
+function selectAdapters(adapters, languages = ['auto']) {
+  const normalizedLanguages = Array.isArray(languages) ? languages.map((language) => language.toLowerCase()) : languages;
+  if (!Array.isArray(normalizedLanguages) || normalizedLanguages.length === 0 || normalizedLanguages.includes('auto')) {
+    return adapters;
+  }
+  const selected = new Set(normalizedLanguages);
+  return adapters.filter((adapter) =>
+    selected.has(adapter.language.toLowerCase()) ||
+    (selected.has('typescript') && adapter.language.toLowerCase() === 'javascript')
+  );
 }
 
 export async function runLinter(stagedFiles, repoPath = process.cwd(), config = {}) {

@@ -125,17 +125,18 @@ Full reference: [docs/configuration.md](./docs/configuration.md)
 
 ## `.codexaignore`
 
-Codexa combines Git's built-in exclusions with repository-local `.codexaignore` patterns. Patterns are root-relative, support `*` globs, and are applied after built-in exclusions. Ignored files are not discovered during the initial scan or incremental checks.
+Codexa combines Git's built-in exclusions with repository-local `.codexaignore` patterns. Patterns are root-relative, support `*`, `**`, directory patterns, and ordered negation, and are applied after built-in exclusions. Ignored files are not discovered during the initial scan or incremental checks.
 
 ## Hooks, fixes, and CI
 
-`codexa init` resolves the active hook directory through Git, including `core.hooksPath` and worktrees. Existing `pre-commit` hooks are preserved and run before Codexa; uninstall restores them. Autofixes operate on working-tree files and must be staged again before commit. CI uses the same normalized findings and policy, and supports JSON and SARIF output.
+`codexa init` resolves the active hook directory through Git, including `core.hooksPath` and worktrees. Existing `pre-commit` hooks are preserved and run before Codexa; uninstall restores them. Autofixes operate on working-tree files and must be staged again before commit. CI uses the same normalized findings and policy, and supports JSON, SARIF, and plain-text output.
 
 ## Development
 
 ```bash
 npm install
 npm test
+npm run test:integration
 npm run lint
 ```
 

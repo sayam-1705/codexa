@@ -1,9 +1,8 @@
 import Database from 'better-sqlite3';
-import os from 'os';
 import path from 'path';
 
-// Database file at ~/.codexa/history.db
-const DB_PATH = path.join(os.homedir(), '.codexa', 'history.db');
+const DB_HOME = process.env.CODEXA_HOME || path.join(process.env.HOME || process.cwd(), '.codexa');
+const DB_PATH = path.join(DB_HOME, 'history.db');
 
 let dbInstance = null;
 

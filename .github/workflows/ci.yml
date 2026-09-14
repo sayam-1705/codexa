@@ -33,3 +33,12 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Build landing site
+        working-directory: landing
+        run: |
+          npm ci
+          npm run build

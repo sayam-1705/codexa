@@ -290,7 +290,8 @@ export async function relintFile(filePath, language) {
       const { ESLint } = await import('eslint');
       const eslint = new ESLint(buildEslintOptions());
       const results = await eslint.lintFiles([filePath]);
-      return { status: 'clean', findings: results[0]?.messages || [] };
+      const findings = results[0]?.messages || [];
+      return { status: findings.length ? 'findings' : 'clean', findings };
     } else if (language === 'python') {
       const output = execFileSync('ruff', ['check', '--output-format=json', filePath], {
         encoding: 'utf8',

@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "_codexaSchema": 2,
+  "blameMode": "off",
+  "languages": ["javascript"],
+  "severity": {
+    "block": ["CRITICAL"],
+    "warn": ["MODERATE"],
+    "log": ["MINOR"],
+    "overrides": {}
+  },
+  "ignore": ["node_modules", ".git"],
+  "team": {
+    "name": "Fixture",
+    "enforceOnCI": true,
+    "blockThreshold": 1,
+    "leaderboard": {
+      "enabled": false,
+      "optIn": false
+    }
+  },
+  "ci": {
+    "outputFormat": "json",
+    "failOn": "CRITICAL",
+    "postPRComment": false,
+    "badge": false
+  }
+}

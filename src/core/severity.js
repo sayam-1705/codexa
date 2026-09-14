@@ -1,6 +1,5 @@
 import { SEVERITIES } from './schema.js';
 import { appendFileSync, mkdirSync } from 'fs';
-import { homedir } from 'os';
 import { join } from 'path';
 
 // JavaScript / TypeScript severity map
@@ -96,7 +95,7 @@ for (const [severity, prefixes] of Object.entries(PYTHON_RULES)) {
 
 function logUnknownRule(rule, language) {
   try {
-    const logDir = join(homedir(), '.codexa');
+    const logDir = join(process.env.CODEXA_HOME || join(process.env.HOME || process.cwd(), '.codexa'));
     mkdirSync(logDir, { recursive: true });
     const logPath = join(logDir, 'unknown-rules.log');
     appendFileSync(logPath, `${new Date().toISOString()} | ${language} | ${rule}\n`);

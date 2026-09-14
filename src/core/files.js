@@ -43,7 +43,7 @@ function isIgnored(patterns, file) {
 
 export async function discoverSupportedFiles(repoPath = process.cwd(), config = {}) {
   const root = repositoryRoot(repoPath);
-  const adapters = await getEnabledAdapters(root);
+  const adapters = selectAdapters(await getEnabledAdapters(root), config.languages);
   const extensions = new Set(adapters.flatMap(adapter => adapter.extensions));
   const ignored = [...(config.ignore || []), ...readCodexaIgnore(root)];
   return runGit(['ls-files', '-co', '--exclude-standard', '-z'], root)
@@ -55,6 +55,18 @@ export async function discoverSupportedFiles(repoPath = process.cwd(), config = 
     .filter(file => !isIgnored(ignored, file))
     .sort()
     .map(file => resolve(root, file));
+}
+
+function selectAdapters(adapters, languages = ['auto']) {
+  const normalizedLanguages = Array.isArray(languages) ? languages.map((language) => language.toLowerCase()) : languages;
+  if (!Array.isArray(normalizedLanguages) || normalizedLanguages.length === 0 || normalizedLanguages.includes('auto')) {
+    return adapters;
+  }
+  const selected = new Set(normalizedLanguages);
+  return adapters.filter((adapter) =>
+    selected.has(adapter.language.toLowerCase()) ||
+    (selected.has('typescript') && adapter.language.toLowerCase() === 'javascript')
+  );
 }
 
 export function relativeRepositoryPath(filePath, repoPath) {

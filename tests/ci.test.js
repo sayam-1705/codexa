@@ -21,7 +21,7 @@ vi.mock('../src/solo/streak.js', () => ({
   })),
 }));
 
-import { formatCIOutput } from '../src/team/ci.js';
+import { formatCIOutput, formatTextOutput } from '../src/team/ci.js';
 
 describe('CI Mode', () => {
   beforeEach(() => {
@@ -219,5 +219,32 @@ describe('CI Mode', () => {
       const output = formatCIOutput(result, '/test/repo', config);
       expect(output.failOn).toBe(failOn);
     }
+  });
+
+  it('formatTextOutput emits human-readable findings', () => {
+    const output = formatTextOutput({
+      blocking: [{ file: 'src/app.js', line: 4, rule: 'no-undef', message: 'Missing name' }],
+      warnings: [],
+      minor: [],
+      preexisting: [],
+      filesChecked: 1,
+    }, '/test/repo', { ci: { failOn: 'CRITICAL' } });
+
+    expect(output).toContain('Codexa');
+    expect(output).toContain('BLOCKED');
+    expect(output).toContain('src/app.js:4 no-undef: Missing name');
+  });
+
+  it('formatCIOutput exposes adapter infrastructure failures as errors', () => {
+    const output = formatCIOutput({
+      blocking: [],
+      warnings: [],
+      minor: [],
+      preexisting: [],
+      adapterFailures: [{ name: 'broken', phase: 'load', error: 'import failed' }],
+    }, '/test/repo', { ci: { failOn: 'CRITICAL' } });
+
+    expect(output.result).toBe('error');
+    expect(output.adapterFailures[0].name).toBe('broken');
   });
 });

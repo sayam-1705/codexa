@@ -44,10 +44,11 @@ jobs:
         run: |
           BASE_BRANCH="${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}"
           set +e
-          codexa check --ci --base "$BASE_BRANCH" --all-files --output json > codexa-result.json 2>&1
+          codexa check --ci --base "$BASE_BRANCH" --all-files --output json > codexa-result.json 2> codexa-error.log
           CODEXA_EXIT=$?
           set -e
           cat codexa-result.json
+          if [ -s codexa-error.log ]; then cat codexa-error.log >&2; fi
           echo "exit_code=$CODEXA_EXIT" >> "$GITHUB_OUTPUT"
 
       - name: Parse results

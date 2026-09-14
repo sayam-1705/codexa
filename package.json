@@ -13,6 +13,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:integration": "vitest run tests/integration",
     "lint": "eslint ."
   },
   "engines": {

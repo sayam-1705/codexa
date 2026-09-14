@@ -41,14 +41,16 @@ export async function runCICheck(repoPath, config, options = {}) {
 
     // Format output
     let output;
-    if ((outputFormat || config.ci?.outputFormat) === 'sarif') {
+    const selectedOutputFormat = outputFormat || config.ci?.outputFormat;
+    if (selectedOutputFormat === 'sarif') {
       output = formatSarifOutput(classified, repoPath, config);
+    } else if (selectedOutputFormat === 'text') {
+      output = formatTextOutput(classified, repoPath, config);
     } else {
       output = formatCIOutput(classified, repoPath, config);
     }
 
-    // Print JSON to stdout (no ANSI codes)
-    console.log(JSON.stringify(output, null, 2));
+    console.log(typeof output === 'string' ? output : JSON.stringify(output, null, 2));
 
     // Determine exit code and enforceOnCI behavior
     const enforceOnCI = config?.team?.enforceOnCI ?? true;
@@ -72,7 +74,8 @@ export async function runCICheck(repoPath, config, options = {}) {
       wouldBlock = true;
     }
 
-    if (wouldBlock && enforceOnCI) {
+    const infrastructureFailure = (classified.adapterFailures || []).length > 0;
+    if (infrastructureFailure || (wouldBlock && enforceOnCI)) {
       exitCode = 1;
     }
 
@@ -97,7 +100,9 @@ export async function runCICheck(repoPath, config, options = {}) {
  */
 export function formatCIOutput(result, repoPath, config) {
   let status = 'clean';
-  if (result.blocking.length > 0) {
+  if ((result.adapterFailures || []).length > 0) {
+    status = 'error';
+  } else if (result.blocking.length > 0) {
     status = 'blocked';
   } else if (result.warnings.length > 0) {
     status = 'warned';
@@ -118,6 +123,7 @@ export function formatCIOutput(result, repoPath, config) {
     warnings: result.warnings || [],
     minor: result.minor || [],
     preexisting: result.preexisting || [],
+    adapterFailures: result.adapterFailures || [],
     summary: {
       total:
         (result.blocking?.length || 0) +
@@ -204,6 +210,24 @@ export function formatSarifOutput(result, repoPath = process.cwd()) {
       }
     ]
   };
+}
+
+export function formatTextOutput(result, repoPath, config) {
+  const output = formatCIOutput(result, repoPath, config);
+  const lines = [
+    `Codexa ${output.codexa} - ${output.result.toUpperCase()}`,
+    `Files checked: ${output.summary.filesChecked}`,
+    `Blocking: ${output.summary.blocking}`,
+    `Warnings: ${output.summary.warnings}`,
+    `Minor: ${output.summary.minor}`,
+  ];
+  for (const failure of output.adapterFailures) {
+    lines.push(`Adapter failure (${failure.phase || 'load'}): ${failure.name}: ${failure.error}`);
+  }
+  for (const error of [...output.blocking, ...output.warnings, ...output.minor]) {
+    lines.push(`${error.file}:${error.line} ${error.rule}: ${error.message}`);
+  }
+  return `${lines.join('\n')}\n`;
 }
 
 // Helper functions

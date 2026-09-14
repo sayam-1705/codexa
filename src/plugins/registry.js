@@ -127,10 +127,20 @@ export async function installAdapter(packageName) {
     );
   }
 
-  // Install globally
+  const baseDir = process.env.CODEXA_HOME || resolve(homedir(), '.codexa');
+  const packagesDir = resolve(baseDir, 'packages');
+  mkdirSync(packagesDir, { recursive: true });
+
+  const pkgJsonPath = resolve(packagesDir, 'package.json');
+  if (!existsSync(pkgJsonPath)) {
+    writeFileSync(pkgJsonPath, JSON.stringify({ name: 'codexa-packages', private: true }, null, 2), 'utf8');
+  }
+
+  // Install
   try {
     console.log(`Installing ${packageName} from npm...`);
-    execFileSync('npm', ['install', '--no-save', '--prefix', resolve(process.env.CODEXA_HOME || resolve(homedir(), '.codexa'), 'packages'), packageName], {
+    execFileSync('npm', ['install', '--save', packageName], {
+      cwd: packagesDir,
       stdio: 'inherit',
     });
   } catch (err) {
@@ -143,11 +153,11 @@ export async function installAdapter(packageName) {
   // Load and validate
   let adapter;
   try {
-    adapter = await loadAdapter(packageName);
+    adapter = await loadAdapter(packageName, baseDir);
   } catch (err) {
     // Uninstall on validation failure
     try {
-      execFileSync('npm', ['uninstall', '--no-save', '--prefix', resolve(process.env.CODEXA_HOME || resolve(homedir(), '.codexa'), 'packages'), packageName], { stdio: 'ignore' });
+      execFileSync('npm', ['uninstall', packageName], { cwd: packagesDir, stdio: 'ignore' });
     } catch (e) {
       // Ignore uninstall errors
     }
@@ -157,6 +167,20 @@ export async function installAdapter(packageName) {
     );
   }
 
+  // Inspect package.json or node_modules to find resolved version
+  let resolvedVersion = adapter.version;
+  try {
+    const installedPkgJson = resolve(packagesDir, 'node_modules', packageName, 'package.json');
+    if (existsSync(installedPkgJson)) {
+      const data = JSON.parse(readFileSync(installedPkgJson, 'utf8'));
+      if (data.version) {
+        resolvedVersion = data.version;
+      }
+    }
+  } catch {
+    // Fall back to adapter.version
+  }
+
   // Add to registry
   const registry = loadRegistry();
   const existing = registry.adapters.findIndex((a) => a.name === adapter.language);
@@ -164,7 +188,8 @@ export async function installAdapter(packageName) {
   const entry = {
     name: adapter.language,
     package: packageName,
-    version: adapter.version,
+    version: resolvedVersion || adapter.version,
+    resolvedVersion: resolvedVersion || adapter.version,
     installedAt: new Date().toISOString(),
     enabled: true,
   };
@@ -182,13 +207,13 @@ export async function installAdapter(packageName) {
     language: adapter.language,
     extensions: adapter.extensions,
     linter: adapter.linter,
-    version: adapter.version,
+    version: entry.version,
     license: adapter.license,
   };
 }
 
 /**
- * Remove an adapter from registry
+ * Remove an adapter from registry and uninstall package from disk
  * @param {string} name - Adapter language name
  * @returns {Object} - { removed: boolean }
  * @throws {Error} - If removing a built-in adapter
@@ -206,6 +231,21 @@ export function removeAdapter(name) {
 
   if (entry.package === 'builtin') {
     throw new Error('Cannot remove built-in adapters.');
+  }
+
+  const baseDir = process.env.CODEXA_HOME || resolve(homedir(), '.codexa');
+  const packagesDir = resolve(baseDir, 'packages');
+
+  // Attempt to uninstall the npm package
+  if (existsSync(packagesDir) && entry.package) {
+    try {
+      execFileSync('npm', ['uninstall', entry.package], {
+        cwd: packagesDir,
+        stdio: 'ignore',
+      });
+    } catch {
+      // Best-effort package uninstall
+    }
   }
 
   registry.adapters = registry.adapters.filter((a) => a.name !== name);

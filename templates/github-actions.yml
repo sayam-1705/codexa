@@ -42,21 +42,51 @@ jobs:
       - name: Run Codexa check
         id: codexa
         run: |
-          codexa check --ci --base main --all-files --output json > codexa-result.json 2>&1 || true
+          set +e
+          codexa check --ci --base main --all-files --output json > codexa-result.json 2>&1
+          CODEXA_EXIT=$?
+          set -e
           cat codexa-result.json
+          echo "exit_code=$CODEXA_EXIT" >> "$GITHUB_OUTPUT"
 
       - name: Parse results
         id: parse
         run: |
-          RESULT=$(jq -r '.result' codexa-result.json)
-          BLOCKING=$(jq '.summary.blocking' codexa-result.json)
-          WARNINGS=$(jq '.summary.warnings' codexa-result.json)
-          FILES=$(jq '.summary.filesChecked' codexa-result.json)
+          if [ ! -s codexa-result.json ]; then
+            echo "::error::Codexa output is empty."
+            exit 1
+          fi
 
-          echo "result=$RESULT" >> $GITHUB_OUTPUT
-          echo "blocking=$BLOCKING" >> $GITHUB_OUTPUT
-          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
-          echo "files=$FILES" >> $GITHUB_OUTPUT
+          # Validate JSON structure
+          if ! jq empty codexa-result.json >/dev/null 2>&1; then
+            echo "::error::Codexa produced invalid JSON output."
+            exit 1
+          fi
+
+          # Check for runtime error field
+          HAS_ERROR=$(jq 'has("error")' codexa-result.json)
+          if [ "$HAS_ERROR" = "true" ]; then
+            ERR_MSG=$(jq -r '.error // "Unknown error"' codexa-result.json)
+            echo "::error::Codexa runtime failure: $ERR_MSG"
+            exit 1
+          fi
+
+          RESULT=$(jq -r '.result // empty' codexa-result.json)
+          if [ -z "$RESULT" ] || [ "$RESULT" = "null" ]; then
+            echo "::error::Codexa output is missing .result field."
+            exit 1
+          fi
+
+          BLOCKING=$(jq '.summary.blocking // 0' codexa-result.json)
+          WARNINGS=$(jq '.summary.warnings // 0' codexa-result.json)
+          FILES=$(jq '.summary.filesChecked // 0' codexa-result.json)
+          ENFORCE=$(jq -r 'if has("enforceOnCI") then .enforceOnCI else true end' codexa-result.json)
+
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+          echo "blocking=$BLOCKING" >> "$GITHUB_OUTPUT"
+          echo "warnings=$WARNINGS" >> "$GITHUB_OUTPUT"
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          echo "enforce_on_ci=$ENFORCE" >> "$GITHUB_OUTPUT"
 
       - name: Post PR comment
         if: github.event_name == 'pull_request' && steps.config.outputs.post_pr_comment == 'true'
@@ -109,6 +139,8 @@ jobs:
               body: comment
             });
 
-      - name: Fail if blocked
-        if: steps.parse.outputs.result == 'blocked'
-        run: exit 1
+      - name: Fail if blocked or error
+        if: steps.codexa.outputs.exit_code != '0' && steps.parse.outputs.enforce_on_ci != 'false'
+        run: |
+          echo "Codexa check failed with exit code ${{ steps.codexa.outputs.exit_code }}."
+          exit ${{ steps.codexa.outputs.exit_code }}

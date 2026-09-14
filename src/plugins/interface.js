@@ -90,17 +90,28 @@ export function validateAdapter(adapter) {
     errors.push('adapter.fix must be a function');
   }
 
-  // Check recommended metadata
+  // Check metadata as warnings per interface contract
   if (!adapter.name || typeof adapter.name !== 'string' || adapter.name.trim() === '') {
-    warnings.push('adapter.name is missing or empty');
+    warnings.push('adapter.name is missing, empty, or not a string');
   }
 
-  if (!adapter.language || typeof adapter.language !== 'string') {
-    warnings.push('adapter.language is missing or not a string');
+  if (!adapter.language || typeof adapter.language !== 'string' || adapter.language.trim() === '') {
+    warnings.push('adapter.language is missing, empty, or not a string');
   }
 
-  if (!Array.isArray(adapter.extensions)) {
-    warnings.push('adapter.extensions should be an array of file extensions');
+  if (!Array.isArray(adapter.extensions) || adapter.extensions.length === 0) {
+    warnings.push('adapter.extensions must be a non-empty array of file extensions');
+  } else {
+    for (const ext of adapter.extensions) {
+      if (typeof ext !== 'string' || !ext.startsWith('.') || ext.length < 2) {
+        warnings.push(`adapter.extensions contains invalid extension: ${ext}`);
+      }
+    }
+  }
+
+  // Check optional metadata
+  if (adapter.version && typeof adapter.version !== 'string') {
+    warnings.push('adapter.version should be a string');
   }
 
   const valid = errors.length === 0;

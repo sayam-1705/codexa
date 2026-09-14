@@ -7,13 +7,28 @@ function normalizedMessage(message) {
 }
 
 export function fingerprintFinding(finding, repoPath) {
-  return fingerprintWithLine(finding, repoPath);
+  // Primary v2 fingerprint must be resilient to line movement and other volatile formatting changes.
+  const file = String(finding.file || '').replace(/\\/g, '/');
+  const relativeFile = file.startsWith(`${repoPath}/`) ? file.slice(repoPath.length + 1) : file;
+  const identity = [
+    relativeFile,
+    finding.rule,
+    finding.code || '',
+    normalizedMessage(finding.message),
+  ].join('\0');
+  return createHash('sha256').update(identity).digest('hex');
 }
 
 function fingerprintWithLine(finding, repoPath) {
   const file = String(finding.file || '').replace(/\\/g, '/');
   const relativeFile = file.startsWith(`${repoPath}/`) ? file.slice(repoPath.length + 1) : file;
-  const identity = [relativeFile, finding.line || 0, finding.rule, finding.code || '', normalizedMessage(finding.message)].join('\0');
+  const identity = [
+    relativeFile,
+    finding.line || 0,
+    finding.rule,
+    finding.code || '',
+    normalizedMessage(finding.message),
+  ].join('\0');
   return createHash('sha256').update(identity).digest('hex');
 }
 
@@ -47,7 +62,9 @@ export function saveBaseline(repoPath, findings) {
 export function filterBaselineFindings(classified, repoPath, baseline) {
   if (!baseline) return classified;
   const isBaselineFinding = finding =>
-    baseline.has(fingerprintWithLine(finding, repoPath)) || baseline.has(legacyFingerprint(finding, repoPath));
+    baseline.has(fingerprintFinding(finding, repoPath)) ||
+    baseline.has(fingerprintWithLine(finding, repoPath)) ||
+    baseline.has(legacyFingerprint(finding, repoPath));
   const filter = findings => findings.filter(finding => !isBaselineFinding(finding));
   return {
     ...classified,

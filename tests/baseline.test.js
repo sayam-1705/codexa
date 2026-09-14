@@ -14,9 +14,9 @@ const finding = (overrides = {}) => ({
 });
 
 describe('baseline fingerprints', () => {
-  it('distinguishes findings by line number', () => {
+  it('treats the same finding on different lines as the same baseline fingerprint', () => {
     expect(fingerprintFinding(finding({ line: 2 }), '/tmp/codexa-baseline'))
-      .not.toBe(fingerprintFinding(finding({ line: 20 }), '/tmp/codexa-baseline'));
+      .toBe(fingerprintFinding(finding({ line: 20 }), '/tmp/codexa-baseline'));
   });
 
   it('filters accepted blocking findings into preexisting output', () => {

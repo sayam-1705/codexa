@@ -33,6 +33,25 @@ describe('Config Validation', () => {
     expect(result.errors.length).toBe(0);
   });
 
+  it('validateConfig accepts leading slash patterns and negations in .codexaignore semantics', async () => {
+    const config = {
+      version: 2,
+      blameMode: 'strict',
+      languages: ['auto'],
+      severity: {
+        block: ['CRITICAL'],
+        warn: ['MODERATE'],
+        log: ['MINOR'],
+        overrides: {},
+      },
+      ignore: ['dist/**', '!dist/keep.js'],
+      team: { blockThreshold: 1 },
+      ci: { failOn: 'CRITICAL' },
+    };
+
+    expect(validateConfig(config).valid).toBe(true);
+  });
+
   it('validateConfig returns errors for invalid blameMode', () => {
     const config = {
       version: 2,

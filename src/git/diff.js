@@ -54,10 +54,13 @@ export async function getChangedLines(repoPath, filePath) {
     const match = hunk.match(/@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/);
     if (match) {
       const start = parseInt(match[1], 10);
-      const count = match[2] ? parseInt(match[2], 10) : 1;
-      const end = count > 0 ? start + count - 1 : start;
-
-      lines.push({ start, end });
+      const count = match[2] !== undefined ? parseInt(match[2], 10) : 1;
+      
+      // If count is 0, this hunk is deletion-only: no new/modified lines added
+      if (count > 0) {
+        const end = start + count - 1;
+        lines.push({ start, end });
+      }
     }
   }
 

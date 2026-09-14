@@ -36,40 +36,45 @@ export async function classifyErrors(errors, changedLinesMap, config = {}) {
   };
 
   for (const error of withBlame) {
-    // Apply blameMode filter
-    if (blameMode === 'strict') {
-      // Only include 'yours' errors in the output
-        // Historical findings are excluded; unknown ownership remains enforceable.
-        if (error.blameCategory === BLAME_CATEGORIES.PREEXISTING) {
-        result.preexisting.push(error);
-        continue;
-      }
-    } else if (blameMode === 'warn') {
-      // Include all errors, preexisting get marked
-      if (error.blameCategory === BLAME_CATEGORIES.PREEXISTING) {
-        result.preexisting.push(error);
-        continue;
-      }
-    } else if (blameMode === 'off') {
-      // Include all errors regardless of blame category
-      // (blameCategory is still set but ignored for filtering)
-    }
-
     const severityConfig = config.severity || {};
     const blockSeverities = severityConfig.block || [SEVERITIES.CRITICAL];
     const warnSeverities = severityConfig.warn || [SEVERITIES.MODERATE];
     const logSeverities = severityConfig.log || [SEVERITIES.MINOR];
 
-    // Apply configured policy buckets after blame filtering.
-    if (blockSeverities.includes(error.severity) && error.blameCategory !== BLAME_CATEGORIES.PREEXISTING) {
-      result.blocking.push(error);
+    const isPreexisting = error.blameCategory === BLAME_CATEGORIES.PREEXISTING;
+
+    // Determine configured bucket according to precedence: block > warn > log
+    let targetBucket = 'minor';
+    if (blockSeverities.includes(error.severity)) {
+      targetBucket = 'blocking';
     } else if (warnSeverities.includes(error.severity)) {
-      result.warnings.push(error);
+      targetBucket = 'warnings';
     } else if (logSeverities.includes(error.severity)) {
-      result.minor.push(error);
-    } else if (error.blameCategory === BLAME_CATEGORIES.PREEXISTING) {
-      // CRITICAL preexisting errors never block
-      result.preexisting.push(error);
+      targetBucket = 'minor';
+    } else {
+      // Fallback if severity wasn't included in any bucket
+      targetBucket = error.severity === SEVERITIES.CRITICAL ? 'blocking' : error.severity === SEVERITIES.MODERATE ? 'warnings' : 'minor';
+    }
+
+    if (blameMode === 'strict') {
+      // In strict mode, only newly introduced findings can block. Pre-existing findings move to preexisting.
+      if (isPreexisting) {
+        result.preexisting.push(error);
+      } else {
+        result[targetBucket].push(error);
+      }
+    } else if (blameMode === 'warn') {
+      // In warn mode, blame analysis still occurs and findings remain visible.
+      // Newly introduced findings follow policy; pre-existing findings are softened so they never block.
+      if (isPreexisting) {
+        // Pre-existing findings move to preexisting but if targetBucket was blocking, they soften to warning/preexisting
+        result.preexisting.push(error);
+      } else {
+        result[targetBucket].push(error);
+      }
+    } else if (blameMode === 'off') {
+      // In off mode, blame is ignored completely and findings are treated uniformly according to severity/policy.
+      result[targetBucket].push(error);
     }
   }
 

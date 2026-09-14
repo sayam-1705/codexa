@@ -3,6 +3,11 @@
  */
 
 import { validateAdapter } from './interface.js';
+import { homedir } from 'os';
+import { resolve } from 'path';
+import { existsSync } from 'fs';
+import { createRequire } from 'module';
+import { pathToFileURL } from 'url';
 
 /**
  * Load an adapter module and wrap all methods with error handling
@@ -10,7 +15,7 @@ import { validateAdapter } from './interface.js';
  * @returns {Promise<Object>} - Wrapped adapter with safe error handling
  * @throws {Error} - If adapter fails validation
  */
-export async function loadAdapter(packageNameOrPath) {
+export async function loadAdapter(packageNameOrPath, customBaseDir = null) {
   let adapterModule;
 
   // Handle built-in adapters
@@ -21,10 +26,37 @@ export async function loadAdapter(packageNameOrPath) {
     const { default: adapter } = await import('./adapters/python.js');
     adapterModule = adapter;
   } else {
-    // Dynamic import of community adapter npm package
+    // Dynamic import of community adapter npm package or local file path
     try {
-      const module = await import(packageNameOrPath);
-      adapterModule = module.default || module;
+      if (packageNameOrPath.startsWith('.') || packageNameOrPath.startsWith('/')) {
+        const module = await import(packageNameOrPath);
+        adapterModule = module.default || module;
+      } else {
+        const baseDir = customBaseDir || process.env.CODEXA_HOME || resolve(homedir(), '.codexa');
+        const pkgDir = resolve(baseDir, 'packages');
+        const candidatePkgJson = resolve(pkgDir, 'package.json');
+        
+        // Use createRequire from package directory if exists
+        let resolvedPath = null;
+        try {
+          const req = createRequire(candidatePkgJson);
+          resolvedPath = req.resolve(packageNameOrPath);
+        } catch {
+          // Fall back to direct file check or standard import
+          const localDirect = resolve(pkgDir, 'node_modules', packageNameOrPath);
+          if (existsSync(localDirect)) {
+            resolvedPath = pathToFileURL(localDirect).href;
+          }
+        }
+
+        if (resolvedPath) {
+          const module = await import(resolvedPath.startsWith('file:') ? resolvedPath : pathToFileURL(resolvedPath).href);
+          adapterModule = module.default || module;
+        } else {
+          const module = await import(packageNameOrPath);
+          adapterModule = module.default || module;
+        }
+      }
     } catch (err) {
       throw new Error(
         `Failed to load adapter '${packageNameOrPath}': ${err.message}`

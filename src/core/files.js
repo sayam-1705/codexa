@@ -9,13 +9,26 @@ function matchesIgnore(pattern, file) {
   const normalized = file.replace(/\\/g, '/');
   const value = pattern.replace(/^\//, '').replace(/\\/g, '/');
   if (!value || value.startsWith('#')) return false;
-  if (value.endsWith('/')) return normalized.startsWith(value);
-  if (value.includes('*')) {
-    const escaped = value.split('*').map(part => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&'));
-    const expression = new RegExp(`^${escaped.join('.*')}$`);
-    return expression.test(normalized) || expression.test(normalized.split('/').pop());
+
+  const matchPattern = value.endsWith('/') ? `${value}**` : value;
+  const escaped = matchPattern.replace(/[|\\{}()[\]^$+?.]/g, '\\$&');
+  const regexSource = escaped
+    .replace(/\\\*\\\*/g, '.*')
+    .replace(/\\\*/g, '[^/]*');
+  const expression = new RegExp(`^${regexSource}$`);
+
+  const basename = normalized.split('/').pop();
+  const dirPrefix = normalized.includes('/') ? normalized.split('/').slice(0, -1).join('/') : '';
+
+  if (value.endsWith('/')) {
+    return normalized.startsWith(value) || normalized.includes(`/${value}`);
   }
-  return normalized === value || normalized.startsWith(`${value}/`) || normalized.endsWith(`/${value}`);
+
+  return (
+    expression.test(normalized) ||
+    expression.test(basename) ||
+    (dirPrefix && new RegExp(`^${regexSource.replace(/\^\$|\$\^/g, '')}$`).test(dirPrefix))
+  );
 }
 
 function readCodexaIgnore(root) {

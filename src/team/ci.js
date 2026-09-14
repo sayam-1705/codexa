@@ -50,37 +50,47 @@ export async function runCICheck(repoPath, config, options = {}) {
     // Print JSON to stdout (no ANSI codes)
     console.log(JSON.stringify(output, null, 2));
 
-    // Determine exit code
+    // Determine exit code and enforceOnCI behavior
+    const enforceOnCI = config?.team?.enforceOnCI ?? true;
     let exitCode = 0;
     const blockThreshold = config?.team?.blockThreshold || 1;
+
+    let wouldBlock = false;
     if (config.ci.failOn === 'CRITICAL' && classified.blocking.length >= blockThreshold) {
-      exitCode = 1;
+      wouldBlock = true;
     } else if (
       config.ci.failOn === 'MODERATE' &&
       (classified.blocking.length > 0 || classified.warnings.length > 0)
     ) {
-      exitCode = 1;
+      wouldBlock = true;
     } else if (
       config.ci.failOn === 'any' &&
       (classified.blocking.length > 0 ||
         classified.warnings.length > 0 ||
         classified.minor.length > 0)
     ) {
+      wouldBlock = true;
+    }
+
+    if (wouldBlock && enforceOnCI) {
       exitCode = 1;
+    }
+
+    if (process.env.CODEXA_TEST_NO_EXIT === 'true') {
+      return { ok: exitCode === 0, exitCode, output };
     }
 
     process.exit(exitCode);
   } catch (err) {
-    console.error(
-      JSON.stringify(
-        {
-          error: `CI check failed: ${err.message}`,
-          fix: 'Run codexa config validate, ensure git is available, and rerun codexa check --ci.',
-        },
-        null,
-        2
-      )
-    );
+    const errorPayload = {
+      error: `CI check failed: ${err.message}`,
+      fix: 'Run codexa config validate, ensure git is available, and rerun codexa check --ci.',
+    };
+    console.error(JSON.stringify(errorPayload, null, 2));
+
+    if (process.env.CODEXA_TEST_NO_EXIT === 'true') {
+      return { ok: false, exitCode: 1, error: errorPayload };
+    }
     process.exit(1);
   }
 }
@@ -100,13 +110,17 @@ export function formatCIOutput(result, repoPath, config) {
     status = 'warned';
   }
 
+  const enforceOnCI = config?.team?.enforceOnCI ?? true;
+
   const output = {
     codexa: CODEXA_VERSION,
     timestamp: new Date().toISOString(),
     repo: repoPath,
     branch: getCurrentBranch(repoPath),
     result: status,
-    failOn: config.ci.failOn,
+    enforceOnCI,
+    enforcementDisabled: !enforceOnCI,
+    failOn: config.ci?.failOn,
     blocking: result.blocking || [],
     warnings: result.warnings || [],
     minor: result.minor || [],

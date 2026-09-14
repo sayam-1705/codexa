@@ -2,6 +2,7 @@ import { cosmiconfig } from 'cosmiconfig';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { readFile } from 'fs/promises';
+import { loadRegistry } from '../plugins/registry.js';
 
 const DEFAULT_CONFIG = {
   version: 2,
@@ -102,8 +103,26 @@ export function validateConfig(config) {
   }
 
   // Check languages
+  const validLanguages = ['auto', 'javascript', 'python', 'typescript'];
   if (!Array.isArray(config.languages)) {
     errors.push(`languages must be an array (got: ${typeof config.languages})`);
+  } else {
+    for (const lang of config.languages) {
+      if (typeof lang !== 'string' || !lang.trim()) {
+        errors.push(`languages must contain non-empty strings`);
+      } else if (!validLanguages.includes(lang.toLowerCase())) {
+        // Also check if installed in registry
+        try {
+          const reg = loadRegistry();
+          const isInstalled = reg.adapters.some((a) => a.name === lang.toLowerCase());
+          if (!isInstalled) {
+            errors.push(`Unknown or unsupported language in languages array: ${lang}`);
+          }
+        } catch {
+          errors.push(`Unknown or unsupported language in languages array: ${lang}`);
+        }
+      }
+    }
   }
 
   // Check severity arrays
@@ -124,11 +143,15 @@ export function validateConfig(config) {
 
     // Check overrides
     if (config.severity.overrides) {
-      for (const [rule, sev] of Object.entries(config.severity.overrides)) {
-        if (!validSeverities.includes(sev)) {
-          errors.push(
-            `severity.overrides.${rule} must be CRITICAL | MODERATE | MINOR (got: ${sev})`
-          );
+      if (typeof config.severity.overrides !== 'object' || Array.isArray(config.severity.overrides)) {
+        errors.push('severity.overrides must be an object');
+      } else {
+        for (const [rule, sev] of Object.entries(config.severity.overrides)) {
+          if (!validSeverities.includes(sev)) {
+            errors.push(
+              `severity.overrides.${rule} must be CRITICAL | MODERATE | MINOR (got: ${sev})`
+            );
+          }
         }
       }
     }
@@ -136,10 +159,23 @@ export function validateConfig(config) {
 
   // Check team settings
   if (config.team) {
-    if (typeof config.team.blockThreshold !== 'number' || config.team.blockThreshold <= 0) {
+    if (
+      typeof config.team.blockThreshold !== 'number' ||
+      !Number.isInteger(config.team.blockThreshold) ||
+      config.team.blockThreshold <= 0
+    ) {
       errors.push(
-        `team.blockThreshold must be positive integer (got: ${config.team.blockThreshold})`
+        `team.blockThreshold must be a positive integer (got: ${config.team.blockThreshold})`
       );
+    }
+    if (config.team.enforceOnCI !== undefined && typeof config.team.enforceOnCI !== 'boolean') {
+      errors.push(`team.enforceOnCI must be a boolean (got: ${typeof config.team.enforceOnCI})`);
+    }
+    if (config.team.allowForceCommit !== undefined && typeof config.team.allowForceCommit !== 'boolean') {
+      errors.push(`team.allowForceCommit must be a boolean`);
+    }
+    if (config.team.forceCommitRequiresReason !== undefined && typeof config.team.forceCommitRequiresReason !== 'boolean') {
+      errors.push(`team.forceCommitRequiresReason must be a boolean`);
     }
   }
 
@@ -150,6 +186,16 @@ export function validateConfig(config) {
       errors.push(
         `ci.failOn must be one of: ${validFailOn.join(', ')} (got: ${config.ci.failOn})`
       );
+    }
+    const validFormats = ['json', 'sarif', 'text'];
+    if (config.ci.outputFormat && !validFormats.includes(config.ci.outputFormat)) {
+      errors.push(`ci.outputFormat must be one of: ${validFormats.join(', ')}`);
+    }
+    if (config.ci.postPRComment !== undefined && typeof config.ci.postPRComment !== 'boolean') {
+      errors.push(`ci.postPRComment must be a boolean`);
+    }
+    if (config.ci.badge !== undefined && typeof config.ci.badge !== 'boolean') {
+      errors.push(`ci.badge must be a boolean`);
     }
   }
 

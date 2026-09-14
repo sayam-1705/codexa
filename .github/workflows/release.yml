@@ -47,7 +47,12 @@ jobs:
         run: npm pack --dry-run
 
       - name: Publish package
-        run: npm publish --access public --provenance
+        run: |
+          if npm view "codexa-toolkit@$(node -p "require('./package.json').version")" version >/dev/null 2>&1; then
+            echo "Package version already published; continuing with release verification."
+          else
+            npm publish --access public --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

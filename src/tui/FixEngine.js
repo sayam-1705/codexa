@@ -3,6 +3,7 @@ import { execFileSync } from 'child_process';
 import { relative, resolve, sep } from 'path';
 
 import { buildEslintOptions } from '../profiles/eslintConfig.js';
+import { savePattern } from '../learning/patterns.js';
 
 /**
  * Applies auto-fix for ESLint or ruff issues.
@@ -67,6 +68,7 @@ async function fixWithEslint(error) {
       writeFileSync(filePath, after, 'utf8');
 
       const diff = computeDiff(before, after);
+      saveAcceptedPattern(error, before, after);
       return {
         success: true,
         diff,
@@ -112,6 +114,7 @@ async function fixWithRuff(error) {
 
     if (before !== after) {
       const diff = computeDiff(before, after);
+      saveAcceptedPattern(error, before, after);
       return {
         success: true,
         diff,
@@ -130,6 +133,27 @@ async function fixWithRuff(error) {
       diff: null,
       message: `ruff error: ${err.message}`,
     };
+  }
+}
+
+function saveAcceptedPattern(error, before, after) {
+  if (!error.repoPath) return;
+
+  const beforeLines = before.split(/\r?\n/);
+  const afterLines = after.split(/\r?\n/);
+  const changedLine = beforeLines.findIndex((line, index) => line !== afterLines[index]);
+  if (changedLine < 0) return;
+
+  try {
+    savePattern(error.repoPath, {
+      file: error.file,
+      rule: error.rule,
+      language: error.language,
+      before: beforeLines[changedLine],
+      after: afterLines[changedLine] || '',
+    });
+  } catch {
+    // Pattern storage is supplemental and must not invalidate a successful fix.
   }
 }
 

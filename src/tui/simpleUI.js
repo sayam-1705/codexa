@@ -24,6 +24,9 @@ export function renderSimpleUI(result) {
       console.log(chalk.red(`  [${idx + 1}] ${error.file}:${error.line}:${error.col}`));
       console.log(chalk.red(`      ${error.message}`));
       console.log(chalk.dim(`      Rule: ${error.rule}`));
+      if (error.patternMatch?.message) {
+        console.log(chalk.cyan(`      ${error.patternMatch.message}`));
+      }
     });
     console.log('');
   }
@@ -35,6 +38,9 @@ export function renderSimpleUI(result) {
       console.log(chalk.yellow(`  [${idx + 1}] ${error.file}:${error.line}:${error.col}`));
       console.log(chalk.yellow(`      ${error.message}`));
       console.log(chalk.dim(`      Rule: ${error.rule}`));
+      if (error.patternMatch?.message) {
+        console.log(chalk.cyan(`      ${error.patternMatch.message}`));
+      }
     });
     console.log('');
   }
@@ -46,6 +52,9 @@ export function renderSimpleUI(result) {
       console.log(chalk.dim(`  [${idx + 1}] ${error.file}:${error.line}:${error.col}`));
       console.log(chalk.dim(`      ${error.message}`));
       console.log(chalk.dim(`      Rule: ${error.rule}`));
+      if (error.patternMatch?.message) {
+        console.log(chalk.cyan(`      ${error.patternMatch.message}`));
+      }
     });
     console.log('');
   }

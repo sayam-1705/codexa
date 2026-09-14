@@ -85,5 +85,6 @@ function normalizeErrorForJson(error) {
     language: error.language,
     isInDiff: error.isInDiff,
     blameCategory: error.blameCategory,
+    patternMatch: error.patternMatch?.message,
   };
 }

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { resolve } from 'path';
 import { runLinter } from '../src/core/runner.js';
+import { logCommitCheck } from '../src/learning/history.js';
 
 // Mock the solo modules to prevent better-sqlite3 issues
 vi.mock('../src/solo/db.js', () => ({
@@ -16,6 +17,10 @@ vi.mock('../src/solo/streak.js', () => ({
     display: '✓ Ready to commit',
     level: 'none',
   })),
+}));
+
+vi.mock('../src/learning/history.js', () => ({
+  logCommitCheck: vi.fn(),
 }));
 
 // Mock the registry and loader to speed up tests
@@ -96,6 +101,21 @@ describe('runner', () => {
       }
     }
   );
+
+  it('records non-empty checks in repository history', async () => {
+    const fixture = resolve('tests/fixtures/js-errors.js');
+    await runLinter([fixture]);
+
+    expect(logCommitCheck).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        filesChecked: 1,
+        errorsFound: expect.any(Number),
+        errorsBlocked: expect.any(Number),
+        patternHits: expect.any(Number),
+      })
+    );
+  });
 
   it(
     'runLinter() correctly groups files by language before linting',

@@ -6,6 +6,9 @@ import { getCurrentStreak, getStreakDisplay } from '../solo/streak.js';
 import { updateSummary } from '../team/summary.js';
 import { runGit } from '../git/command.js';
 import { materializeIndexFiles } from '../git/diff.js';
+import { readFileSync } from 'fs';
+import { logCommitCheck } from '../learning/history.js';
+import { findMatchingPattern } from '../learning/matcher.js';
 
 async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config = {}, snapshot = null) {
   if (!stagedFiles || !stagedFiles.length) {
@@ -68,10 +71,42 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   classified.filesChecked = stagedFiles.length;
   classified.durationMs = Date.now() - startTime;
 
+  let patternHits = 0;
+  const addPatternMatches = (errors) => errors.map((error) => {
+    try {
+      const fileLines = readFileSync(error.file, 'utf8').split(/\r?\n/);
+      const patternMatch = findMatchingPattern(error, fileLines, repoPath);
+      if (patternMatch) {
+        patternHits += 1;
+        return Object.freeze({ ...error, patternMatch });
+      }
+    } catch {
+      // Pattern suggestions are best-effort and must not affect linting.
+    }
+    return error;
+  });
+
+  classified.blocking = addPatternMatches(classified.blocking);
+  classified.warnings = addPatternMatches(classified.warnings);
+  classified.minor = addPatternMatches(classified.minor);
+  classified.patternHits = patternHits;
+
   // Calculate stats for logging
   const errorsBlocked = classified.blocking.length;
   const blockThreshold = config?.team?.blockThreshold || 1;
   const commitAllowed = errorsBlocked < blockThreshold;
+
+  try {
+    logCommitCheck(repoPath, {
+      filesChecked: stagedFiles.length,
+      errorsFound: rawErrors.length,
+      errorsBlocked,
+      patternHits,
+      commitAllowed,
+    });
+  } catch {
+    // History is supplemental and must not affect lint results.
+  }
 
   // Persist to database
   try {
@@ -96,6 +131,7 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
       filesChecked: stagedFiles.length,
       errorsFound: rawErrors.length,
       errorsBlocked,
+      patternHits,
       commitAllowed,
       durationMs,
       errors: errorsForLog,

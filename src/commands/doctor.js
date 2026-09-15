@@ -104,6 +104,6 @@ export async function doctorCommand(options) {
 
   console.log();
   if (strict && !allPassed) {
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 }

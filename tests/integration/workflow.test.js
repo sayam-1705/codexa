@@ -141,11 +141,11 @@ describe('repository integration workflow', () => {
         env: npmEnv,
       });
     } catch (err) {
-      // In sandboxed CI environments without network access, npm install of a local
-      // tarball may still fail if peer dependencies require resolution. Skip the
-      // rest of the test but mark it clearly so it is not silently green.
-      console.warn(`LIVE PACKAGE SMOKE TEST: SKIPPED (npm install from tarball failed — likely no network access)\n${err.message}`);
-      return;
+      if (process.env.OFFLINE_TEST === '1') {
+        console.warn(`LIVE PACKAGE SMOKE TEST: SKIPPED (offline test flag set)\n${err.message}`);
+        return;
+      }
+      throw new Error(`npm install from tarball failed: ${err.message}. If this is an offline environment, set OFFLINE_TEST=1.`);
     }
     const version = spawnSync(join(consumer, 'node_modules', '.bin', 'codexa'), ['--version'], {
       cwd: consumer,

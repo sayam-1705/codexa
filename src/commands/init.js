@@ -20,7 +20,7 @@ export async function initCommand(options) {
     console.error(chalk.red('\n✗ This folder is not a git repository.'));
     console.error(chalk.dim('  Why: Codexa installs a pre-commit hook in .git/hooks.'));
     console.error(chalk.dim('  Fix: run git init, then run codexa init again.'));
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 
   console.log('');

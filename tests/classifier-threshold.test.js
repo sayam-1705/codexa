@@ -3,40 +3,38 @@ import { outputCIJson } from '../src/tui/renderer.js';
 
 describe('Threshold logic in renderer', () => {
   it('does not fail when blocking errors < blockThreshold', () => {
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     outputCIJson({
       blocking: [{}],
       warnings: [],
       minor: [],
-      preexisting: []
-    }, { team: { blockThreshold: 2 } });
+      preexisting: [],
+      ciAllowed: true // Below threshold
+    });
 
-    expect(exitSpy).toHaveBeenCalledWith(0);
+    expect(process.exitCode).toBe(0);
     const output = JSON.parse(logSpy.mock.calls[0][0]);
     expect(output.result).toBe('warned');
 
-    exitSpy.mockRestore();
     logSpy.mockRestore();
   });
 
   it('fails when blocking errors >= blockThreshold', () => {
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     outputCIJson({
       blocking: [{}, {}],
       warnings: [],
       minor: [],
-      preexisting: []
-    }, { team: { blockThreshold: 2 } });
+      preexisting: [],
+      ciAllowed: false // Above threshold
+    });
 
-    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(process.exitCode).toBe(1);
     const output = JSON.parse(logSpy.mock.calls[0][0]);
     expect(output.result).toBe('blocked');
 
-    exitSpy.mockRestore();
     logSpy.mockRestore();
   });
 });

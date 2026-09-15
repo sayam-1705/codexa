@@ -16,40 +16,31 @@ export async function renderResults(classifiedResult, config, options = {}) {
 
   if (ciMode) {
     // Explicit CI mode: output JSON
-    outputCIJson(classifiedResult, config);
+    outputCIJson(classifiedResult);
     return;
   }
 
   // Interactive mode: use simple chalk-based UI (no JSX parsing issues)
   try {
     renderSimpleUI(classifiedResult);
-    const blockThreshold = config?.team?.blockThreshold || 1;
-    const policy = config?.adapterFailurePolicy || 'fail';
-    const hasAdapterFailures = (classifiedResult.adapterFailures || []).length > 0;
-    const adapterFailureBlocks = hasAdapterFailures && policy === 'fail';
-    // Exit with appropriate code
-    process.exit(
-      classifiedResult.blocking.length >= blockThreshold || adapterFailureBlocks ? 1 : 0
-    );
+    // Use the single source of truth from runner.js
+    process.exitCode = classifiedResult.commitAllowed === false ? 1 : 0;
   } catch (err) {
     // Fallback to JSON on any error
     console.error(`Error: ${err.message}`);
-    outputCIJson(classifiedResult, config);
+    outputCIJson(classifiedResult);
   }
 }
 
 /**
  * Output structured JSON for CI environments
  */
-export function outputCIJson(classifiedResult, config = {}) {
+export function outputCIJson(classifiedResult) {
   const { blocking, warnings, minor, preexisting } = classifiedResult;
-  const blockThreshold = config?.team?.blockThreshold || 1;
 
-  // Determine overall result status
+  // Determine overall result status (single source of truth)
   let result = 'clean';
-  const adapterFailureBlocks = (classifiedResult.adapterFailures || []).length > 0 &&
-    (config?.adapterFailurePolicy || 'fail') === 'fail';
-  if (adapterFailureBlocks || blocking.length >= blockThreshold) {
+  if (classifiedResult.ciAllowed === false) {
     result = 'blocked';
   } else if (warnings.length > 0 || blocking.length > 0) {
     result = 'warned';
@@ -80,8 +71,8 @@ export function outputCIJson(classifiedResult, config = {}) {
 
   console.log(JSON.stringify(output));
 
-  // Exit with appropriate code
-  process.exit(result === 'blocked' ? 1 : 0);
+  // Set appropriate exit code instead of hard exit
+  process.exitCode = result === 'blocked' ? 1 : 0;
 }
 
 /**

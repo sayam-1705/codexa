@@ -48,7 +48,7 @@ describe('renderer', () => {
     };
 
     const result = {
-      blocking: [error],
+      blocking: [error], ciAllowed: false,
       warnings: [],
       minor: [],
       preexisting: [],
@@ -69,7 +69,7 @@ describe('renderer', () => {
     const { outputCIJson } = await import('../src/tui/renderer.js');
 
     const result = {
-      blocking: [{ severity: 'CRITICAL' }],
+      blocking: [{ severity: 'CRITICAL' }], ciAllowed: false,
       warnings: [],
       minor: [],
       preexisting: [],
@@ -117,21 +117,21 @@ describe('renderer', () => {
     const { outputCIJson } = await import('../src/tui/renderer.js');
     const result = {
       blocking: [], warnings: [], minor: [], preexisting: [],
-      adapterFailures: [{ name: 'broken', phase: 'lint', error: 'boom' }],
+      adapterFailures: [{ name: 'broken', phase: 'lint', error: 'boom' }], ciAllowed: false,
     };
 
     outputCIJson(result, { adapterFailurePolicy: 'fail' });
 
     const output = JSON.parse(consoleLogSpy.mock.calls[0][0]);
     expect(output.result).toBe('blocked');
-    expect(processExitSpy).toHaveBeenCalledWith(1);
+    expect(process.exitCode).toBe(1);
   });
 
   it('should exit with code 1 when result is "blocked"', async () => {
     const { outputCIJson } = await import('../src/tui/renderer.js');
 
     const result = {
-      blocking: [{ severity: 'CRITICAL' }],
+      blocking: [{ severity: 'CRITICAL' }], ciAllowed: false,
       warnings: [],
       minor: [],
       preexisting: [],
@@ -139,7 +139,7 @@ describe('renderer', () => {
 
     outputCIJson(result);
 
-    expect(processExitSpy).toHaveBeenCalledWith(1);
+    expect(process.exitCode).toBe(1);
   });
 
   it('should exit with code 0 when result is not "blocked"', async () => {
@@ -154,14 +154,14 @@ describe('renderer', () => {
 
     outputCIJson(result);
 
-    expect(processExitSpy).toHaveBeenCalledWith(0);
+    expect(process.exitCode).toBe(0);
   });
 
   it('blockThreshold=2 treats 1 blocking error as warned (exits 0)', async () => {
     const { outputCIJson } = await import('../src/tui/renderer.js');
 
     const result = {
-      blocking: [{ severity: 'CRITICAL' }],
+      blocking: [{ severity: 'CRITICAL' }], ciAllowed: true,
       warnings: [],
       minor: [],
       preexisting: [],
@@ -171,14 +171,14 @@ describe('renderer', () => {
 
     const output = JSON.parse(consoleLogSpy.mock.calls[0][0]);
     expect(output.result).toBe('warned'); // 1 < threshold of 2
-    expect(processExitSpy).toHaveBeenCalledWith(0);
+    expect(process.exitCode).toBe(0);
   });
 
   it('blockThreshold=2 blocks when 2+ errors present', async () => {
     const { outputCIJson } = await import('../src/tui/renderer.js');
 
     const result = {
-      blocking: [{ severity: 'CRITICAL' }, { severity: 'CRITICAL' }],
+      blocking: [{ severity: 'CRITICAL' }, { severity: 'CRITICAL' }], ciAllowed: false,
       warnings: [],
       minor: [],
       preexisting: [],
@@ -188,6 +188,6 @@ describe('renderer', () => {
 
     const output = JSON.parse(consoleLogSpy.mock.calls[0][0]);
     expect(output.result).toBe('blocked');
-    expect(processExitSpy).toHaveBeenCalledWith(1);
+    expect(process.exitCode).toBe(1);
   });
 });

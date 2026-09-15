@@ -125,6 +125,6 @@ export async function statsCommand() {
     console.log(lines.join('\n'));
   } catch (err) {
     console.error(`Error generating stats: ${err.message}`);
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 }

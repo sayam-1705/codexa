@@ -59,7 +59,7 @@ async function checkCommand(options) {
 
     if (!stagedFiles.length) {
       console.log('No staged files to check.');
-      process.exit(0);
+      process.exitCode = 0; return;
     }
 
     // Show spinner while linting
@@ -91,7 +91,7 @@ async function baselineCommand(action) {
   const repoPath = process.cwd();
   if (action !== 'update') {
     console.error('Usage: codexa baseline update');
-    process.exit(1);
+    process.exitCode = 1; return;
   }
   try {
     const { discoverSupportedFiles } = await import('../src/core/files.js');
@@ -109,7 +109,7 @@ async function baselineCommand(action) {
         `Cannot update baseline: ${adapterFailures.length} adapter failure(s) mean the scan is incomplete.\n` +
         adapterFailures.map(f => `  [${f.name}] ${f.error}`).join('\n')
       );
-      process.exit(1);
+      process.exitCode = 1; return;
     }
 
     const findings = [...result.blocking, ...result.warnings, ...result.minor, ...result.preexisting];
@@ -117,7 +117,7 @@ async function baselineCommand(action) {
     console.log(`Baseline updated with ${findings.length} finding(s): ${path}`);
   } catch (err) {
     console.error(`Could not update baseline: ${err.message}`);
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 }
 
@@ -139,7 +139,7 @@ program
       await initCommand(options);
     } catch (err) {
       console.error(err.message);
-      process.exit(1);
+      process.exitCode = 1; return;
     }
   });
 
@@ -164,7 +164,7 @@ program
     const match = /^(.+):(\d+)$/.exec(loc);
     if (!match) {
       console.error('Invalid location. Fix: use file:line (example: src/app.js:42).');
-      process.exit(1);
+      process.exitCode = 1; return;
     }
 
     const filePath = join(process.cwd(), match[1]);
@@ -172,13 +172,13 @@ program
 
     if (!existsSync(filePath)) {
       console.error(`File not found: ${match[1]}\nFix: verify the relative path and rerun codexa explain <file>:<line>.`);
-      process.exit(1);
+      process.exitCode = 1; return;
     }
 
     const lines = readFileSync(filePath, 'utf8').split('\n');
     if (lineNumber < 1 || lineNumber > lines.length) {
       console.error(`Invalid line number: ${lineNumber}\nFix: choose a value between 1 and ${lines.length}.`);
-      process.exit(1);
+      process.exitCode = 1; return;
     }
 
     const targetLine = lines[lineNumber - 1];
@@ -288,7 +288,7 @@ program
       await configSetCommand(args[0], args[1]);
     } else {
       console.error(`Unknown config subcommand: ${subcommand}`);
-      process.exit(1);
+      process.exitCode = 1; return;
     }
   });
 
@@ -312,7 +312,7 @@ program
       console.log(chalk.dim('Run codexa list-languages to see all installed adapters.'));
     } catch (err) {
       console.error(chalk.red(`✗ ${err.message}`));
-      process.exit(1);
+      process.exitCode = 1; return;
     }
   });
 
@@ -348,7 +348,7 @@ program
       console.log(chalk.dim('════════════════════════════════════════════'));
     } catch (err) {
       console.error(chalk.red(`✗ ${err.message}`));
-      process.exit(1);
+      process.exitCode = 1; return;
     }
   });
 
@@ -359,7 +359,7 @@ program
     try {
       if (name === 'javascript' || name === 'python') {
         console.error(chalk.red('✗ Cannot remove built-in adapters.'));
-        process.exit(1);
+        process.exitCode = 1; return;
       }
 
       removeAdapter(name);
@@ -368,7 +368,7 @@ program
       console.log(chalk.dim('To fully remove: npm uninstall -g codexa-adapter-' + name));
     } catch (err) {
       console.error(chalk.red(`✗ ${err.message}`));
-      process.exit(1);
+      process.exitCode = 1; return;
     }
   });
 
@@ -408,7 +408,7 @@ program
       } else {
         console.error(`Unknown command: ${commandName}`);
         console.log('Run "codexa help" to see all commands.');
-        process.exit(1);
+        process.exitCode = 1; return;
       }
     } else {
       program.outputHelp();
@@ -442,7 +442,7 @@ program
     const match = /^(.+):(\d+)$/.exec(loc);
     if (!match) {
       console.error('Invalid location. Fix: use file:line (example: src/app.js:42).');
-      process.exit(1);
+      process.exitCode = 1; return;
     }
 
     const filePath = join(process.cwd(), match[1]);
@@ -450,7 +450,7 @@ program
 
     if (!existsSync(filePath)) {
       console.error(`File not found: ${match[1]}\nFix: verify the relative path and rerun codexa fix <file>:<line>.`);
-      process.exit(1);
+      process.exitCode = 1; return;
     }
 
     const { findErrorAtLocation } = await import('../src/core/locate.js');
@@ -458,7 +458,7 @@ program
 
     if (!error) {
       console.error(`No fixable error found at ${match[1]}:${lineNumber}`);
-      process.exit(1);
+      process.exitCode = 1; return;
     }
 
     const { applyFix } = await import('../src/tui/FixEngine.js');
@@ -471,7 +471,7 @@ program
       }
     } else {
       console.error(chalk.red('✗ ' + result.message));
-      process.exit(1);
+      process.exitCode = 1; return;
     }
   });
 

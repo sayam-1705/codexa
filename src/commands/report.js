@@ -96,6 +96,6 @@ export async function reportCommand(options) {
     console.log(lines.join('\n'));
   } catch (err) {
     console.error(`Error generating report: ${err.message}`);
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 }

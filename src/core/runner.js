@@ -22,6 +22,10 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
       streakDisplay: '✓ Ready to commit',
       filesChecked: 0,
       durationMs: 0,
+      adapterFailures: [],
+      adapterFailureBlocks: false,
+      commitAllowed: true,
+      ciAllowed: true,
     };
   }
 
@@ -64,6 +68,7 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
       adapterFailures,
       adapterFailureBlocks,
       commitAllowed: !adapterFailureBlocks,
+      ciAllowed: !adapterFailureBlocks,
     };
   }
 
@@ -158,8 +163,23 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   // 'warn': adapter failures logged but don't block
   // 'ignore': adapter failures ignored entirely
   const commitAllowed = !adapterFailureBlocks && errorsBlocked < blockThreshold;
+
+  // CI specific enforcement
+  let ciWouldBlock = false;
+  if (config?.ci?.failOn === 'CRITICAL' && classified.blocking.length >= blockThreshold) {
+    ciWouldBlock = true;
+  } else if (config?.ci?.failOn === 'MODERATE' && (classified.blocking.length > 0 || classified.warnings.length > 0)) {
+    ciWouldBlock = true;
+  } else if (config?.ci?.failOn === 'any' && (classified.blocking.length > 0 || classified.warnings.length > 0 || classified.minor.length > 0)) {
+    ciWouldBlock = true;
+  }
+  
+  const enforceOnCI = config?.team?.enforceOnCI !== false;
+  const ciAllowed = !adapterFailureBlocks && (!ciWouldBlock || !enforceOnCI);
+
   classified.adapterFailureBlocks = adapterFailureBlocks;
   classified.commitAllowed = commitAllowed;
+  classified.ciAllowed = ciAllowed;
 
   try {
     logCommitCheck(repoPath, {

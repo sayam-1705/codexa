@@ -61,6 +61,22 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Verify published release
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Waiting for npm registry to index codexa-toolkit@${VERSION}..."
+          # Give registry a moment to propagate
+          sleep 10
+          mkdir -p /tmp/verify-release
+          cd /tmp/verify-release
+          npm init -y
+          npm install codexa-toolkit@${VERSION}
+          npx codexa --version | grep "${VERSION}"
+          npx codexa --help
+          git init
+          npx codexa init
+          npx codexa check --ci
+
       - name: Generate Homebrew formula for the published tag
         run: |
           VERSION=$(node -p "require('./package.json').version")

@@ -52,32 +52,9 @@ export async function runCICheck(repoPath, config, options = {}) {
 
     console.log(typeof output === 'string' ? output : JSON.stringify(output, null, 2));
 
-    // Determine exit code and enforceOnCI behavior
-    const enforceOnCI = config?.team?.enforceOnCI ?? true;
+    // Determine exit code (runner.js is the single source of truth)
     let exitCode = 0;
-    const blockThreshold = config?.team?.blockThreshold || 1;
-
-    let wouldBlock = false;
-    if (config.ci.failOn === 'CRITICAL' && classified.blocking.length >= blockThreshold) {
-      wouldBlock = true;
-    } else if (
-      config.ci.failOn === 'MODERATE' &&
-      (classified.blocking.length > 0 || classified.warnings.length > 0)
-    ) {
-      wouldBlock = true;
-    } else if (
-      config.ci.failOn === 'any' &&
-      (classified.blocking.length > 0 ||
-        classified.warnings.length > 0 ||
-        classified.minor.length > 0)
-    ) {
-      wouldBlock = true;
-    }
-
-    const infrastructureFailure = (classified.adapterFailures || []).length > 0;
-    const policy = config?.adapterFailurePolicy || 'fail';
-    const adapterFailureBlocks = infrastructureFailure && policy === 'fail';
-    if (adapterFailureBlocks || (wouldBlock && enforceOnCI)) {
+    if (classified.ciAllowed === false) {
       exitCode = 1;
     }
 

@@ -30,12 +30,12 @@ export async function configValidateCommand() {
       }
       console.log('');
       console.log(chalk.dim('Fix: update codexa.config.json or run codexa config set <key> <value>.'));
-      process.exit(1);
+      process.exitCode = 1; return;
     }
   } catch (err) {
     console.log(chalk.red(`✖ Could not load codexa.config.json: ${err.message}`));
     console.log(chalk.dim('Fix: create one with codexa config init --team (or codexa init).'));
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 }
 
@@ -51,7 +51,7 @@ export async function configShowCommand() {
   } catch (err) {
     console.log(chalk.red(`✖ Could not read active config: ${err.message}`));
     console.log(chalk.dim('Fix: run codexa config validate for details, or recreate with codexa config init --team.'));
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 }
 
@@ -97,7 +97,7 @@ src/legacy/
   } catch (err) {
     console.log(chalk.red(`✖ Failed to initialize codexa.config.json: ${err.message}`));
     console.log(chalk.dim('Fix: ensure this folder is writable and rerun codexa config init --team.'));
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 }
 
@@ -142,7 +142,7 @@ export async function configSetCommand(keyPath, value) {
         console.log(chalk.red(`  ${error}`));
       }
       console.log(chalk.dim(`Fix: choose a valid value for ${keyPath}, then run codexa config validate.`));
-      process.exit(1);
+      process.exitCode = 1; return;
     }
 
     // Write back
@@ -151,6 +151,6 @@ export async function configSetCommand(keyPath, value) {
   } catch (err) {
     console.log(chalk.red(`✖ Failed to update ${keyPath}: ${err.message}`));
     console.log(chalk.dim('Fix: verify the key exists and codexa.config.json is writable.'));
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 }

@@ -24,7 +24,6 @@ describe('doctorCommand', () => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
     // Prevent process.exit
-    vi.spyOn(process, 'exit').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -49,6 +48,6 @@ describe('doctorCommand', () => {
 
     await doctorCommand({ strict: true });
 
-    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(process.exitCode).toBe(1);
   });
 });

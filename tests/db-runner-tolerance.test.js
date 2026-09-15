@@ -33,12 +33,13 @@ import { runLinter } from '../src/core/runner.js';
 
 describe('SQLite — runner tolerates database errors', () => {
   it('runLinter result is valid even when getDb throws', async () => {
-    const result = await runLinter([], process.cwd(), {});
+    // Pass a dummy file to bypass the empty-files fast path
+    const result = await runLinter(['/tmp/dummy.js'], process.cwd(), {});
     expect(result).toMatchObject({ blocking: [], warnings: [], minor: [] });
   });
 
   it('runLinter result structure is complete and not undefined when DB fails', async () => {
-    const result = await runLinter([], process.cwd(), {});
+    const result = await runLinter(['/tmp/dummy.js'], process.cwd(), {});
     // All required result fields must exist (not undefined)
     expect(result).toHaveProperty('blocking');
     expect(result).toHaveProperty('warnings');
@@ -46,5 +47,6 @@ describe('SQLite — runner tolerates database errors', () => {
     expect(result).toHaveProperty('adapterFailures');
     // No adapter failures should exist in a clean empty run
     expect(result.adapterFailures).toHaveLength(0);
+    expect(result.commitAllowed).toBe(true);
   });
 });

@@ -112,6 +112,7 @@ Minimal codexa.config.json:
   "version": 2,
   "blameMode": "strict",
   "languages": ["auto"],
+  "adapterFailurePolicy": "fail",
   "severity": {
     "block": ["CRITICAL"],
     "warn": ["MODERATE"],

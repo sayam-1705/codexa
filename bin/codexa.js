@@ -74,8 +74,16 @@ async function checkCommand(options) {
     // Render results (TUI or CI JSON)
     await renderResults(classified, config, { ciMode });
   } catch (err) {
+    if (options.ci) {
+      console.log(JSON.stringify({
+        error: `Check failed: ${err.message}`,
+        fix: 'Run codexa config validate, ensure Git is available, and rerun codexa check --ci.',
+      }));
+      process.exitCode = 1;
+      return;
+    }
     console.error('Error running linters:', err.message);
-    process.exit(1);
+    process.exitCode = 1;
   }
 }
 
@@ -92,6 +100,18 @@ async function baselineCommand(action) {
     const config = await loadConfig(repoPath);
     const files = await discoverSupportedFiles(repoPath, config);
     const result = await runLinter(files, repoPath, config);
+
+    // A baseline must only be created from a complete, successful analysis.
+    // If any adapter failed, the scan is incomplete and cannot produce a valid baseline.
+    const adapterFailures = result.adapterFailures || [];
+    if (adapterFailures.length > 0) {
+      console.error(
+        `Cannot update baseline: ${adapterFailures.length} adapter failure(s) mean the scan is incomplete.\n` +
+        adapterFailures.map(f => `  [${f.name}] ${f.error}`).join('\n')
+      );
+      process.exit(1);
+    }
+
     const findings = [...result.blocking, ...result.warnings, ...result.minor, ...result.preexisting];
     const path = saveBaseline(repoPath, findings);
     console.log(`Baseline updated with ${findings.length} finding(s): ${path}`);

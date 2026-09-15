@@ -87,7 +87,8 @@ export async function runCICheck(repoPath, config, options = {}) {
       error: `CI check failed: ${err.message}`,
       fix: 'Run codexa config validate, ensure git is available, and rerun codexa check --ci.',
     };
-    console.error(JSON.stringify(errorPayload, null, 2));
+    // CI JSON is a stdout contract, including infrastructure/config failures.
+    console.log(JSON.stringify(errorPayload));
 
     return { ok: false, exitCode: 1, error: errorPayload };
   }

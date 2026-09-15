@@ -43,3 +43,30 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  platform-smoke:
+    name: Platform smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: CLI, hook, snapshot, and package smoke tests
+        run: npm run test:integration
+
+      - name: Verify package contents
+        run: npm pack --dry-run

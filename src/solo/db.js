@@ -1,7 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { mkdirSync } from 'fs';
+import { homedir } from 'os';
 
-const DB_HOME = process.env.CODEXA_HOME || path.join(process.env.HOME || process.cwd(), '.codexa');
+const DB_HOME = process.env.CODEXA_HOME || path.join(homedir(), '.codexa');
 const DB_PATH = path.join(DB_HOME, 'history.db');
 
 let dbInstance = null;
@@ -13,9 +15,11 @@ let dbInstance = null;
 export function getDb() {
   if (dbInstance) return dbInstance;
 
+  mkdirSync(DB_HOME, { recursive: true });
   dbInstance = new Database(DB_PATH);
   dbInstance.pragma('journal_mode = WAL');
   dbInstance.pragma('synchronous = NORMAL');
+  dbInstance.pragma('busy_timeout = 3000');
 
   initializeSchema(dbInstance);
   return dbInstance;

@@ -29,12 +29,28 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
 
   // Load enabled adapters
   const loadedAdapters = await getEnabledAdapters(repoPath);
-  const adapterFailures = loadedAdapters.failedAdapters || [];
+  // Failed adapters follow the same language selection as loaded adapters.
+  // An adapter excluded by configuration must not block the current check.
+  const adapterFailures = (loadedAdapters.failedAdapters || []).filter((failure) =>
+    adapterMatchesLanguage(failure, config.languages)
+  );
   const adapters = selectAdapters(loadedAdapters, config.languages);
 
   if (adapters.length === 0) {
-    const selectedFailures = adapterFailures.filter((failure) => adapterMatchesLanguage(failure, config.languages));
-    const adapterFailureBlocks = selectedFailures.length > 0 && (config.adapterFailurePolicy || 'fail') === 'fail';
+    const policy = config?.adapterFailurePolicy || 'fail';
+    const hasAdapterFailures = adapterFailures.length > 0;
+    const adapterFailureBlocks = hasAdapterFailures && policy === 'fail';
+
+    if (hasAdapterFailures && policy === 'warn') {
+      console.error(
+        `[codexa] WARNING: ${adapterFailures.length} adapter(s) failed but adapterFailurePolicy=warn — check may be incomplete.`
+      );
+    } else if (hasAdapterFailures && policy === 'ignore') {
+      console.error(
+        `[codexa] WARNING: adapterFailurePolicy=ignore — adapter failures suppressed. Check may be incomplete.`
+      );
+    }
+
     return {
       blocking: [],
       warnings: [],
@@ -45,7 +61,7 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
       streakDisplay: '✓ Ready to commit',
       filesChecked: stagedFiles.length,
       durationMs: 0,
-      adapterFailures: selectedFailures,
+      adapterFailures,
       adapterFailureBlocks,
       commitAllowed: !adapterFailureBlocks,
     };
@@ -119,14 +135,31 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   const policy = config?.adapterFailurePolicy || 'fail';
   const hasAdapterFailures = classified.adapterFailures && classified.adapterFailures.length > 0;
 
-  // Apply adapter failure policy
+  // Apply adapter failure policy:
+  //   fail   (default) — adapter failure → check incomplete → enforcement fails → non-zero exit → commit blocked
+  //   warn              — adapter failure → warning shown → check continues → does not block on its own
+  //   ignore            — adapter failure → intentionally ignored
+  //
+  // WARNING: adapterFailurePolicy=ignore allows checks to pass when an adapter
+  // cannot complete analysis. Use only when adapter failures are expected and
+  // acceptable in your workflow; never use as the default for production repositories.
   let adapterFailureBlocks = false;
   if (hasAdapterFailures && policy === 'fail') {
     adapterFailureBlocks = true;
+  } else if (hasAdapterFailures && policy === 'warn') {
+    console.error(
+      `[codexa] WARNING: ${classified.adapterFailures.length} adapter(s) failed but adapterFailurePolicy=warn — check may be incomplete.`
+    );
+  } else if (hasAdapterFailures && policy === 'ignore') {
+    console.error(
+      `[codexa] WARNING: adapterFailurePolicy=ignore — adapter failures suppressed. Check may be incomplete.`
+    );
   }
   // 'warn': adapter failures logged but don't block
   // 'ignore': adapter failures ignored entirely
   const commitAllowed = !adapterFailureBlocks && errorsBlocked < blockThreshold;
+  classified.adapterFailureBlocks = adapterFailureBlocks;
+  classified.commitAllowed = commitAllowed;
 
   try {
     logCommitCheck(repoPath, {
@@ -207,8 +240,8 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   } catch (err) {
     // Non-blocking: database errors should not fail the lint check
     console.error(
-      `Codexa could not write run metrics to .codexa/codexa.db: ${err.message}\n` +
-      'Fix: ensure the repository is writable and rerun codexa check. Lint results are still valid.'
+      `Codexa could not write supplemental run metrics: ${err.message}\n` +
+      'Lint results are still valid; ensure the Codexa data directory is writable if metrics are needed.'
     );
     classified.runId = null;
     classified.streak = 0;

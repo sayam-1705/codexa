@@ -131,4 +131,20 @@ describe('LinterAdapter Interface', () => {
     expect(result.errors).toContain('Lint result[0].file must be a non-empty string');
     expect(result.errors).toContain('Lint result[0].line must be a positive integer');
   });
+
+  it.each([
+    null,
+    undefined,
+    {},
+    'string',
+    [null],
+    [{}],
+    [{ line: 0 }],
+    [{ col: 0 }],
+    [{ file: '' }],
+  ])('rejects malformed lint result %j', (value) => {
+    const result = validateLintResult(value);
+    expect(result.valid).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
 });

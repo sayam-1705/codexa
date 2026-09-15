@@ -64,6 +64,53 @@ describe('runner', () => {
     expect(result.commitAllowed).toBe(false);
   });
 
+  it('keeps successful adapters running but blocks auto mode when another adapter failed', async () => {
+    const python = {
+      name: 'Python', language: 'python', extensions: ['.py'],
+      lint: vi.fn(async () => []),
+    };
+    getEnabledAdapters.mockResolvedValueOnce(Object.assign([python], {
+      failedAdapters: [{ name: 'javascript', language: 'javascript', phase: 'load', error: 'module missing' }],
+    }));
+
+    const result = await runLinter([resolve('tests/fixtures/py-errors.py')], process.cwd(), { languages: ['auto'] });
+
+    expect(python.lint).toHaveBeenCalledOnce();
+    expect(result.adapterFailures).toHaveLength(1);
+    expect(result.commitAllowed).toBe(false);
+  });
+
+  it('does not block a python-only check for an unselected JavaScript adapter failure', async () => {
+    const python = {
+      name: 'Python', language: 'python', extensions: ['.py'],
+      lint: vi.fn(async () => []),
+    };
+    getEnabledAdapters.mockResolvedValueOnce(Object.assign([python], {
+      failedAdapters: [{ name: 'javascript', language: 'javascript', phase: 'load', error: 'module missing' }],
+    }));
+
+    const result = await runLinter([resolve('tests/fixtures/py-errors.py')], process.cwd(), { languages: ['python'] });
+
+    expect(python.lint).toHaveBeenCalledOnce();
+    expect(result.adapterFailures).toEqual([]);
+    expect(result.commitAllowed).toBe(true);
+  });
+
+  it.each(['warn', 'ignore'])('reports but does not block a selected adapter failure with %s policy', async (adapterFailurePolicy) => {
+    getEnabledAdapters.mockResolvedValueOnce(Object.assign([], {
+      failedAdapters: [{ name: 'python', language: 'python', phase: 'load', error: 'module missing' }],
+    }));
+
+    const result = await runLinter(['/tmp/example.py'], process.cwd(), {
+      languages: ['python'],
+      adapterFailurePolicy,
+    });
+
+    expect(result.adapterFailures).toHaveLength(1);
+    expect(result.adapterFailureBlocks).toBe(false);
+    expect(result.commitAllowed).toBe(true);
+  });
+
   it(
     'runLinter(null) returns classified result with empty arrays',
     { timeout: 10000 },

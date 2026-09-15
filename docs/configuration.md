@@ -43,6 +43,12 @@ Complete field-by-field guide for codexa.config.json.
 
 ## Field Reference
 
+## Configuration precedence
+
+Codexa loads the first project configuration found in this order: `codexa.config.json`, `codexa.config.js`, `codexa.config.cjs`, `codexa.config.mjs`, then the `codexa` key in `package.json`. That project configuration is deep-merged over Codexa defaults. Command options apply only where a command explicitly supports them and take precedence for that invocation.
+
+`.codexaignore` augments (it never replaces) the effective `ignore` array. Its non-comment lines are appended after configuration patterns and de-duplicated.
+
 ### version
 
 - Type: integer
@@ -77,6 +83,18 @@ Complete field-by-field guide for codexa.config.json.
 
 ```json
 { "languages": ["javascript", "python"] }
+```
+
+### adapterFailurePolicy
+
+- Type: string
+- Default: `fail`
+- Allowed values: `fail`, `warn`, `ignore`
+
+`fail` is the safe default: an enabled, selected adapter that cannot load or lint makes analysis incomplete and blocks enforcement. `warn` reports the adapter failure but allows the check to continue. `ignore` also allows the check to continue; use it only when the resulting coverage gap is explicitly acceptable, because it can allow a check to pass while an adapter did not analyze its files.
+
+```json
+{ "adapterFailurePolicy": "fail" }
 ```
 
 ### severity.block

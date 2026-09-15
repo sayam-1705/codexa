@@ -12,6 +12,7 @@ import { loadConfig, createDefaultConfig } from '../team/config.js';
 export async function initCommand(options) {
   const repoPath = process.cwd();
   let baselineReady = false;
+  let scanResults = null;
 
   try {
     repositoryRoot(repoPath);
@@ -48,7 +49,14 @@ export async function initCommand(options) {
     if (configExists) {
       configSpinner.succeed('Existing config found');
     } else {
-      const isTeam = options && options.team !== false;
+      // Determine team/solo mode: --team forces team, --no-team forces solo, default solo
+      let isTeam = false;
+      if (options.team === true) {
+        isTeam = true;
+      } else if (options.noTeam === true) {
+        isTeam = false;
+      }
+      // If neither flag provided, isTeam remains false (solo default)
 
       if (isTeam) {
         createDefaultConfig(repoPath, { team: true });
@@ -127,9 +135,21 @@ src/legacy/
           console.log(chalk.dim('Resolve the issues, then run codexa init again to verify the baseline.'));
           process.exitCode = 1;
         } else {
-          saveBaseline(repoPath, []);
-          baselineReady = true;
-          demoSpinner.succeed('BASELINE READY: the supported repository scan is clean.');
+          scanResults = results;
+          const adapterFailures = results?.adapterFailures || [];
+          if (adapterFailures.length > 0) {
+            demoSpinner.fail('Initial scan found adapter failures');
+            console.log(chalk.dim('BASELINE NOT READY: adapter failures must be resolved.'));
+            console.log(chalk.dim('  Adapter failures:'));
+            for (const failure of adapterFailures) {
+              console.log(chalk.dim(`    [${failure.name}] ${failure.error}`));
+            }
+            process.exitCode = 1;
+          } else {
+            saveBaseline(repoPath, []);
+            baselineReady = true;
+            demoSpinner.succeed('BASELINE READY: the supported repository scan is clean.');
+          }
         }
       } catch (err) {
         demoSpinner.fail('Initial scan failed');
@@ -142,9 +162,17 @@ src/legacy/
     process.exitCode = 1;
   }
 
+  // Prevent baseline save when adapter failures occurred
   if (baselineReady === false && process.exitCode !== 1) {
-    saveBaseline(repoPath, []);
-    baselineReady = true;
+    const adapterFailures = (scanResults?.adapterFailures || []);
+    if (adapterFailures.length > 0) {
+      console.log(chalk.dim('BASELINE NOT READY: adapter failures must be resolved.'));
+      console.log(chalk.dim('  Adapter failures:'));
+      for (const failure of adapterFailures) {
+        console.log(chalk.dim(`    [${failure.name}] ${failure.error}`));
+      }
+      process.exitCode = 1;
+    }
   }
 
   // Final summary box

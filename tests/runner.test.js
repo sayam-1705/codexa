@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { resolve } from 'path';
 import { runLinter } from '../src/core/runner.js';
+import { getEnabledAdapters } from '../src/plugins/registry.js';
 import { logCommitCheck } from '../src/learning/history.js';
 
 // Mock the solo modules to prevent better-sqlite3 issues
@@ -50,6 +51,18 @@ describe('runner', () => {
       expect(result.streak).toBe(0);
     }
   );
+
+  it('fails closed when every selected adapter failed to load', async () => {
+    getEnabledAdapters.mockResolvedValueOnce(Object.assign([], {
+      failedAdapters: [{ name: 'javascript', language: 'javascript', phase: 'load', error: 'module missing' }],
+    }));
+
+    const result = await runLinter(['/tmp/example.js'], process.cwd(), { adapterFailurePolicy: 'fail' });
+
+    expect(result.adapterFailures).toHaveLength(1);
+    expect(result.adapterFailureBlocks).toBe(true);
+    expect(result.commitAllowed).toBe(false);
+  });
 
   it(
     'runLinter(null) returns classified result with empty arrays',

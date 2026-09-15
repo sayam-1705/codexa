@@ -113,6 +113,20 @@ describe('renderer', () => {
     expect(output.result).toBe('clean');
   });
 
+  it('fails closed in JSON mode when an adapter failed', async () => {
+    const { outputCIJson } = await import('../src/tui/renderer.js');
+    const result = {
+      blocking: [], warnings: [], minor: [], preexisting: [],
+      adapterFailures: [{ name: 'broken', phase: 'lint', error: 'boom' }],
+    };
+
+    outputCIJson(result, { adapterFailurePolicy: 'fail' });
+
+    const output = JSON.parse(consoleLogSpy.mock.calls[0][0]);
+    expect(output.result).toBe('blocked');
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+  });
+
   it('should exit with code 1 when result is "blocked"', async () => {
     const { outputCIJson } = await import('../src/tui/renderer.js');
 
@@ -177,4 +191,3 @@ describe('renderer', () => {
     expect(processExitSpy).toHaveBeenCalledWith(1);
   });
 });
-

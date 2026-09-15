@@ -33,6 +33,8 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   const adapters = selectAdapters(loadedAdapters, config.languages);
 
   if (adapters.length === 0) {
+    const selectedFailures = adapterFailures.filter((failure) => adapterMatchesLanguage(failure, config.languages));
+    const adapterFailureBlocks = selectedFailures.length > 0 && (config.adapterFailurePolicy || 'fail') === 'fail';
     return {
       blocking: [],
       warnings: [],
@@ -43,6 +45,9 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
       streakDisplay: '✓ Ready to commit',
       filesChecked: stagedFiles.length,
       durationMs: 0,
+      adapterFailures: selectedFailures,
+      adapterFailureBlocks,
+      commitAllowed: !adapterFailureBlocks,
     };
   }
 
@@ -111,7 +116,17 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
   // Calculate stats for logging
   const errorsBlocked = classified.blocking.length;
   const blockThreshold = config?.team?.blockThreshold || 1;
-  const commitAllowed = errorsBlocked < blockThreshold;
+  const policy = config?.adapterFailurePolicy || 'fail';
+  const hasAdapterFailures = classified.adapterFailures && classified.adapterFailures.length > 0;
+
+  // Apply adapter failure policy
+  let adapterFailureBlocks = false;
+  if (hasAdapterFailures && policy === 'fail') {
+    adapterFailureBlocks = true;
+  }
+  // 'warn': adapter failures logged but don't block
+  // 'ignore': adapter failures ignored entirely
+  const commitAllowed = !adapterFailureBlocks && errorsBlocked < blockThreshold;
 
   try {
     logCommitCheck(repoPath, {
@@ -214,6 +229,17 @@ function selectAdapters(adapters, languages = ['auto']) {
     selected.has(adapter.language.toLowerCase()) ||
     (selected.has('typescript') && adapter.language.toLowerCase() === 'javascript')
   );
+}
+
+function adapterMatchesLanguage(failure, languages = ['auto']) {
+  if (!Array.isArray(languages) || languages.length === 0 || languages.some((language) => String(language).toLowerCase() === 'auto')) {
+    return true;
+  }
+  const language = String(failure.language || failure.name || '').toLowerCase();
+  return languages.some((candidate) => {
+    const normalized = String(candidate).toLowerCase();
+    return normalized === language || (normalized === 'typescript' && language === 'javascript');
+  });
 }
 
 export async function runLinter(stagedFiles, repoPath = process.cwd(), config = {}) {

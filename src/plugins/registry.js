@@ -5,7 +5,7 @@
 
 import { homedir } from 'os';
 import { resolve, dirname } from 'path';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, rmSync } from 'fs';
 import { execFileSync } from 'child_process';
 import { loadAdapter } from './loader.js';
 
@@ -32,13 +32,22 @@ export function loadRegistry() {
   if (existsSync(registryPath)) {
     try {
       const content = readFileSync(registryPath, 'utf8');
-      return JSON.parse(content);
+      const registry = JSON.parse(content);
+      if (!registry || typeof registry !== 'object' || !Array.isArray(registry.adapters)) {
+        throw new Error('registry must contain an adapters array');
+      }
+      return registry;
     } catch (err) {
       console.error(
         `Could not read adapter registry at ${registryPath}: ${err.message}\n` +
-        'Fix: delete the corrupted file and run codexa list-languages to regenerate defaults.'
+        'Resetting registry to defaults.'
       );
-      // Fall through to initialize default
+      // Reset corrupted registry to defaults and continue
+      try {
+        rmSync(registryPath);
+      } catch {
+        // Best-effort removal
+      }
     }
   }
 
@@ -81,7 +90,18 @@ export function loadRegistry() {
 function saveRegistry(registry) {
   const registryPath = getRegistryPath();
   mkdirSync(dirname(registryPath), { recursive: true });
-  writeFileSync(registryPath, JSON.stringify(registry, null, 2), 'utf8');
+  const tempPath = `${registryPath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    writeFileSync(tempPath, JSON.stringify(registry, null, 2), 'utf8');
+    renameSync(tempPath, registryPath);
+  } catch (error) {
+    try {
+      if (existsSync(tempPath)) rmSync(tempPath);
+    } catch {
+      // Preserve the original registry if temporary-file cleanup fails.
+    }
+    throw error;
+  }
 }
 
 /**

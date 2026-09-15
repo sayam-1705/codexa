@@ -24,8 +24,13 @@ export async function renderResults(classifiedResult, config, options = {}) {
   try {
     renderSimpleUI(classifiedResult);
     const blockThreshold = config?.team?.blockThreshold || 1;
+    const policy = config?.adapterFailurePolicy || 'fail';
+    const hasAdapterFailures = (classifiedResult.adapterFailures || []).length > 0;
+    const adapterFailureBlocks = hasAdapterFailures && policy === 'fail';
     // Exit with appropriate code
-    process.exit(classifiedResult.blocking.length >= blockThreshold ? 1 : 0);
+    process.exit(
+      classifiedResult.blocking.length >= blockThreshold || adapterFailureBlocks ? 1 : 0
+    );
   } catch (err) {
     // Fallback to JSON on any error
     console.error(`Error: ${err.message}`);
@@ -42,7 +47,9 @@ export function outputCIJson(classifiedResult, config = {}) {
 
   // Determine overall result status
   let result = 'clean';
-  if (blocking.length >= blockThreshold) {
+  const adapterFailureBlocks = (classifiedResult.adapterFailures || []).length > 0 &&
+    (config?.adapterFailurePolicy || 'fail') === 'fail';
+  if (adapterFailureBlocks || blocking.length >= blockThreshold) {
     result = 'blocked';
   } else if (warnings.length > 0 || blocking.length > 0) {
     result = 'warned';
@@ -56,6 +63,12 @@ export function outputCIJson(classifiedResult, config = {}) {
     warnings: warnings.map(normalizeErrorForJson),
     minor: minor.map(normalizeErrorForJson),
     preexisting: preexisting.map(normalizeErrorForJson),
+    adapterFailures: (classifiedResult.adapterFailures || []).map((failure) => ({
+      name: failure.name,
+      language: failure.language,
+      phase: failure.phase || 'load',
+      error: failure.error,
+    })),
     summary: {
       total: blocking.length + warnings.length + minor.length + preexisting.length,
       blocking: blocking.length,

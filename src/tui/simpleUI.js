@@ -5,7 +5,7 @@ import chalk from 'chalk';
  * Shows errors in a readable format
  */
 export function renderSimpleUI(result) {
-  const { blocking, warnings, minor, streakDisplay } = result;
+  const { blocking, warnings, minor, streakDisplay, adapterFailures = [] } = result;
 
   // Header
   const totalIssues = blocking.length + warnings.length + minor.length;
@@ -59,10 +59,23 @@ export function renderSimpleUI(result) {
     console.log('');
   }
 
+  // Show adapter failures
+  if (adapterFailures.length > 0) {
+    console.log(chalk.red.bold('⚠️  ADAPTER FAILURES:'));
+    adapterFailures.forEach((failure, idx) => {
+      console.log(chalk.red(`  [${idx + 1}] ${failure.name}: ${failure.error}`));
+    });
+    console.log('');
+  }
+
   // Status
-  if (blocking.length > 0) {
-    console.log(chalk.red.bold(`❌ Commit blocked - fix ${blocking.length} error(s) to proceed`));
-  } else if (warnings.length > 0) {
+  const hasBlocking = blocking.length > 0;
+  const hasWarnings = warnings.length > 0;
+  const hasAdapterFailures = adapterFailures.length > 0;
+
+  if (hasBlocking || hasAdapterFailures) {
+    console.log(chalk.red.bold(`❌ Commit blocked - fix ${blocking.length} error(s)${hasAdapterFailures ? ` and ${adapterFailures.length} adapter failure(s)` : ''} to proceed`));
+  } else if (hasWarnings) {
     console.log(chalk.yellow.bold(`⚠️  Review ${warnings.length} warning(s) before committing`));
   } else {
     console.log(chalk.green.bold(`✅ All checks passed - ready to commit`));

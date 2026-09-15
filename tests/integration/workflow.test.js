@@ -25,11 +25,20 @@ function git(repo, args) {
 }
 
 function runCli(repo, args, env = {}) {
-  return spawnSync(process.execPath, [cliPath, ...args], {
+  const options = {
     cwd: repo,
     encoding: 'utf8',
-    env: { ...process.env, ...env },
-  });
+    // Keep the per-user adapter registry isolated between concurrently-run tests.
+    env: { ...process.env, NODE_OPTIONS: '', CODEXA_HOME: join(repo, '.codexa-test-home'), ...env },
+  };
+  let result = spawnSync(process.execPath, [cliPath, ...args], options);
+  // Some constrained CI sandboxes transiently reject process creation while a
+  // just-finished child is being reaped. Retrying once keeps the smoke test
+  // focused on the packaged CLI rather than that host artifact.
+  if (result.error?.code === 'EPERM') {
+    result = spawnSync(process.execPath, [cliPath, ...args], options);
+  }
+  return result;
 }
 
 function createRepository() {
@@ -64,6 +73,7 @@ describe('repository integration workflow', () => {
 
     const stagedCheck = runCli(repo, ['check', '--ci']);
     expect(stagedCheck.status).toBe(0);
+    if (!stagedCheck.stdout) throw stagedCheck.error || new Error(`CI command produced no stdout: ${stagedCheck.stderr}`);
     expect(JSON.parse(stagedCheck.stdout).result).toBe('clean');
 
     writeFileSync(source, 'export const answer = missingValue;\n', 'utf8');
@@ -104,20 +114,24 @@ describe('repository integration workflow', () => {
     expect(readFileSync(originalMarker, 'utf8')).toBe('original');
     expect(readFileSync(join(repo, 'codexa-hook-ran'), 'utf8')).toBe('codexa');
 
-    expect(runCli(repo, ['uninstall', '--yes']).status).toBe(0);
+    expect(runCli(repo, ['revoke', '--yes']).status).toBe(0);
     expect(readFileSync(hook, 'utf8')).toBe(original);
   });
 
   it('installs the packed CLI into a clean consumer project', async () => {
     const packageDir = mkdtempSync(join(tmpdir(), 'codexa-package-'));
     tempRepos.push(packageDir);
-    await execFileAsync('npm', ['pack', '--pack-destination', packageDir], { cwd: repoRoot });
+    // Keep npm's cache inside the disposable test directory. This makes the
+    // packaging smoke test work in read-only home-directory environments too.
+    const npmEnv = { ...process.env, npm_config_cache: join(packageDir, '.npm-cache') };
+    await execFileAsync('npm', ['pack', '--pack-destination', packageDir], { cwd: repoRoot, env: npmEnv });
     const tarball = join(packageDir, 'codexa-toolkit-1.1.3.tgz');
     const consumer = join(packageDir, 'consumer');
     mkdirSync(consumer);
     cpSync(consumerFixture, consumer, { recursive: true });
     await execFileAsync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
       cwd: consumer,
+      env: npmEnv,
     });
     const version = spawnSync(join(consumer, 'node_modules', '.bin', 'codexa'), ['--version'], {
       cwd: consumer,

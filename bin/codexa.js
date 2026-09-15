@@ -111,6 +111,8 @@ program
 program
   .command('init')
   .description('Initialize Codexa in a git repository')
+  .option('--team', 'Create a team configuration (default: solo)')
+  .option('--no-team', 'Create a solo configuration (default: if --team is omitted)')
   .action(async (options) => {
     try {
       const { initCommand } = await import('../src/commands/init.js');
@@ -395,6 +397,7 @@ program
 
 program
   .command('uninstall')
+  .alias('revoke')
   .description('Remove Codexa from this repository (hook, config, .codexa/ data)')
   .option('--yes', 'Skip confirmation prompts')
   .option('--purge-global', 'Also remove ~/.codexa (adapter registry) — affects ALL repos')
@@ -452,4 +455,7 @@ program
     }
   });
 
-program.parse(process.argv);
+// Commander does not await async action handlers when using parse().  Awaiting
+// parseAsync keeps short-lived CLI processes alive until checks, CI output, and
+// cleanup have completed.
+await program.parseAsync(process.argv);

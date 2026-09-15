@@ -99,6 +99,8 @@ Codexa can install any published package that implements the adapter interface:
 codexa add-language <published-adapter-package>
 ```
 
+Community adapters are executable npm code. Install adapters only from packages and publishers you trust; Codexa validates their interface and fails closed by default if an enabled adapter cannot complete analysis.
+
 Python linting is supported, but its adapter does not provide automatic fixes; `codexa fix` reports those cases without changing files.
 
 ## Configuration
@@ -141,6 +143,8 @@ Codexa combines Git's built-in exclusions with repository-local `.codexaignore` 
 ## Hooks, fixes, and CI
 
 `codexa init` resolves the active hook directory through Git, including `core.hooksPath` and worktrees. Existing `pre-commit` hooks are preserved and run before Codexa; uninstall restores them. Autofixes operate on working-tree files and must be staged again before commit. CI uses the same normalized findings and policy, and supports JSON, SARIF, and plain-text output.
+
+To remove Codexa from only the current project (its managed hook, config, ignore file, and local `.codexa/` data), run `codexa revoke` or `codexa uninstall`. Both ask for confirmation; use `--yes` for scripts. They never remove the globally installed CLI unless `uninstall --purge-global` is explicitly requested.
 
 ## Development
 

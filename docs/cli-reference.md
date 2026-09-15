@@ -436,11 +436,12 @@ Usage:
 ```bash
 codexa uninstall
 codexa uninstall --yes --purge-global
+codexa revoke --yes
 ```
 
 Description:
 
-Removes Codexa from the repository (hook, config, .codexa/ data).
+Removes Codexa from the repository (managed hook, config, ignore file, and `.codexa/` data). `codexa revoke` is an alias intended for removing Codexa from the current project. It does not remove the globally installed CLI or adapter registry unless `--purge-global` is explicitly supplied to `uninstall`.
 
 Flags:
 

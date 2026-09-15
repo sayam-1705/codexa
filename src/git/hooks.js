@@ -1,4 +1,4 @@
-import { writeFileSync, readFileSync, chmodSync, existsSync, rmSync, renameSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, chmodSync, existsSync, rmSync, renameSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { gitPath } from './command.js';
 
@@ -50,18 +50,48 @@ exit $status
 export function installHook(repoPath) {
   const path = hookPath(repoPath);
   mkdirSync(dirname(path), { recursive: true });
-  let backup;
+
+  // If already a Codexa hook, nothing to do
   if (existsSync(path)) {
     const content = readFileSync(path, 'utf8');
     if (content.includes(CODEXA_START)) return path;
+  }
+
+  let backup = null;
+  // Preserve existing non-Codexa hook
+  if (existsSync(path)) {
     backup = originalPath(path);
     if (existsSync(backup)) {
       throw new Error(`Cannot install Codexa hook: backup already exists at ${backup}`);
     }
     renameSync(path, backup);
   }
-  writeFileSync(path, hookScript(backup), 'utf8');
-  chmodSync(path, 0o755);
+
+  // Write to temporary file first
+  const tmpPath = `${path}.tmp`;
+  try {
+    writeFileSync(tmpPath, hookScript(backup), 'utf8');
+    chmodSync(tmpPath, 0o755);
+    renameSync(tmpPath, path);
+  } catch (err) {
+    // Cleanup temp file on failure
+    try {
+      if (existsSync(tmpPath)) unlinkSync(tmpPath);
+    } catch {
+      // Ignore cleanup errors
+    }
+    // Restore original hook if we moved it
+    if (backup && existsSync(backup)) {
+      try {
+        if (existsSync(path)) rmSync(path);
+        renameSync(backup, path);
+      } catch {
+        // Best-effort restoration
+      }
+    }
+    throw err;
+  }
+
   return path;
 }
 

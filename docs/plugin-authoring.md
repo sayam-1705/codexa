@@ -6,6 +6,10 @@ Build language adapters for Codexa.
 
 A Codexa adapter is an npm package that implements the `LinterAdapter` interface. Adapters are loaded at runtime and route files to the appropriate linter.
 
+## Trust boundary
+
+Installing an adapter runs code supplied by that npm package on the developer's machine. Install only packages and publishers you trust. Codexa validates adapter metadata and lint results, and an enabled adapter failure blocks enforcement by default rather than being reported as a clean check.
+
 ## Getting Started
 
 1. Copy the [adapter template](../templates/adapter-template/)

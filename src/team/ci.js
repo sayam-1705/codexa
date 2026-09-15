@@ -75,7 +75,9 @@ export async function runCICheck(repoPath, config, options = {}) {
     }
 
     const infrastructureFailure = (classified.adapterFailures || []).length > 0;
-    if (infrastructureFailure || (wouldBlock && enforceOnCI)) {
+    const policy = config?.adapterFailurePolicy || 'fail';
+    const adapterFailureBlocks = infrastructureFailure && policy === 'fail';
+    if (adapterFailureBlocks || (wouldBlock && enforceOnCI)) {
       exitCode = 1;
     }
 

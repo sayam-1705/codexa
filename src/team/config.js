@@ -36,6 +36,7 @@ const DEFAULT_CONFIG = {
     failOn: 'CRITICAL',
     badge: true,
   },
+  adapterFailurePolicy: 'fail',
   _codexaSchema: 2,
 };
 
@@ -218,6 +219,16 @@ export function validateConfig(config) {
           errors.push('team.leaderboard.metrics must be an array of strings');
         }
       }
+    }
+  }
+
+  // Check adapter failure policy
+  const validPolicies = ['fail', 'warn', 'ignore'];
+  if (config.adapterFailurePolicy !== undefined) {
+    if (typeof config.adapterFailurePolicy !== 'string' || !validPolicies.includes(config.adapterFailurePolicy)) {
+      errors.push(
+        `adapterFailurePolicy must be one of: ${validPolicies.join(', ')} (got: ${config.adapterFailurePolicy})`
+      );
     }
   }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateAdapter } from '../src/plugins/interface.js';
+import { validateAdapter, validateLintResult } from '../src/plugins/interface.js';
 
 describe('LinterAdapter Interface', () => {
   it('validateAdapter returns valid=true for correctly shaped adapter', () => {
@@ -66,7 +66,7 @@ describe('LinterAdapter Interface', () => {
     expect(result.errors.some((e) => e.includes('fix'))).toBe(true);
   });
 
-  it('validateAdapter returns warnings (not errors) when name is missing', () => {
+  it('rejects an adapter when name is missing', () => {
     const adapter = {
       language: 'test',
       detect: async () => true,
@@ -76,11 +76,11 @@ describe('LinterAdapter Interface', () => {
 
     const result = validateAdapter(adapter);
 
-    expect(result.valid).toBe(true);
-    expect(result.warnings.some((w) => w.includes('name'))).toBe(true);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((error) => error.includes('name'))).toBe(true);
   });
 
-  it('validateAdapter returns warnings when extensions is missing', () => {
+  it('rejects an adapter when extensions are missing', () => {
     const adapter = {
       name: 'Test',
       language: 'test',
@@ -91,8 +91,8 @@ describe('LinterAdapter Interface', () => {
 
     const result = validateAdapter(adapter);
 
-    expect(result.valid).toBe(true);
-    expect(result.warnings.some((w) => w.includes('extensions'))).toBe(true);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((error) => error.includes('extensions'))).toBe(true);
   });
 
   it('validateAdapter never throws', () => {
@@ -121,6 +121,14 @@ describe('LinterAdapter Interface', () => {
     const result = validateAdapter(adapter);
 
     expect(result.valid).toBe(false);
-    expect(result.errors.length).toBe(3);
+    expect(result.errors.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('rejects malformed lint findings before they reach classification', () => {
+    const result = validateLintResult([{ file: '', line: 0, col: '1', message: '', rule: '', severity: '', language: '' }]);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Lint result[0].file must be a non-empty string');
+    expect(result.errors).toContain('Lint result[0].line must be a positive integer');
   });
 });

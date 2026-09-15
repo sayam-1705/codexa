@@ -2,7 +2,7 @@
  * Dynamic adapter loader with contextual error handling.
  */
 
-import { validateAdapter } from './interface.js';
+import { validateAdapter, validateLintResult } from './interface.js';
 import { homedir } from 'os';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
@@ -64,7 +64,7 @@ export async function loadAdapter(packageNameOrPath, customBaseDir = null) {
     }
   }
 
-  // Validate the loaded adapter
+  // Validate the loaded adapter - stricter validation now with required fields
   const validation = validateAdapter(adapterModule);
   if (!validation.valid) {
     const errMsg = validation.errors.join('; ');
@@ -74,11 +74,12 @@ export async function loadAdapter(packageNameOrPath, customBaseDir = null) {
   // Wrap detect() with 500ms timeout and error handling
   const originalDetect = adapterModule.detect;
   const wrappedDetect = async (repoPath) => {
+    let timeout;
     try {
       return await Promise.race([
         originalDetect(repoPath),
         new Promise((_, reject) =>
-          setTimeout(
+          timeout = setTimeout(
             () => reject(new Error('Adapter detect() exceeded 500ms timeout')),
             500
           )
@@ -90,6 +91,8 @@ export async function loadAdapter(packageNameOrPath, customBaseDir = null) {
         err.message
       );
       return false;
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
@@ -97,7 +100,13 @@ export async function loadAdapter(packageNameOrPath, customBaseDir = null) {
   const originalLint = adapterModule.lint;
   const wrappedLint = async (files, config) => {
     try {
-      return await originalLint(files, config);
+      const results = await originalLint(files, config);
+      // Validate lint result structure
+      const validation = validateLintResult(results);
+      if (!validation.valid) {
+        throw new Error(`[${adapterModule.name || 'unknown'}] lint() returned invalid result: ${validation.errors.join('; ')}`);
+      }
+      return results;
     } catch (err) {
       throw new Error(`[${adapterModule.name || 'unknown'}] lint() failed: ${err.message}`, { cause: err });
     }

@@ -10,13 +10,20 @@ import {
   writeFileSync,
 } from 'fs';
 import { join, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { spawnSync, execFile, execFileSync } from 'child_process';
 import { promisify } from 'util';
 import { tmpdir } from 'os';
 
-const repoRoot = resolve(new URL('../..', import.meta.url).pathname);
+// fileURLToPath correctly converts file:///C:/... URLs to C:\... on Windows.
+// Using .pathname instead leaves a spurious leading slash (/C:/...) which
+// causes path.resolve() to treat the drive letter as a directory component.
+const repoRoot = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const cliPath = join(repoRoot, 'bin', 'codexa.js');
 const consumerFixture = join(repoRoot, 'tests', 'fixtures', 'consumer-project');
+// The installed CLI shim in node_modules/.bin is "codexa.cmd" on Windows, "codexa" on Unix.
+const binSuffix = process.platform === 'win32' ? '.cmd' : '';
+const npm = 'npm' + binSuffix;
 const tempRepos = [];
 const execFileAsync = promisify(execFile);
 
@@ -60,6 +67,9 @@ afterEach(() => {
 });
 
 describe('repository integration workflow', () => {
+  // Windows CI is 3-5× slower: cold Node+ESLint startup takes ~15-20s per
+  // CLI invocation. This test makes 5 separate spawns, so 120s is appropriate.
+  // The global testTimeout (30s) is too tight for Windows — set it explicitly here.
   it('initializes, baselines, checks the staged index, and blocks a new finding', () => {
     const repo = createRepository();
 
@@ -91,8 +101,10 @@ describe('repository integration workflow', () => {
     const output = JSON.parse(blocked.stdout);
     expect(output.result).toBe('blocked');
     expect(output.blocking.some((finding) => finding.rule === 'no-undef')).toBe(true);
-  });
+  }, 120000);
 
+  // Windows CI spawns 3+ CLI processes (init + hook execution + revoke).
+  // 60s gives a comfortable margin over the ~20s Linux baseline.
   it('executes and restores an existing hook during uninstall', () => {
     const repo = createRepository();
     const hook = join(repo, '.git', 'hooks', 'pre-commit');
@@ -124,7 +136,7 @@ describe('repository integration workflow', () => {
 
     expect(runCli(repo, ['revoke', '--yes']).status).toBe(0);
     expect(readFileSync(hook, 'utf8')).toBe(original);
-  });
+  }, 60000);
 
   it('installs the packed CLI into a clean consumer project', async () => {
     const packageDir = mkdtempSync(join(tmpdir(), 'codexa-package-'));
@@ -137,7 +149,7 @@ describe('repository integration workflow', () => {
     }
     const npmEnv = { ...process.env, npm_config_cache: join(packageDir, '.npm-cache') };
     try {
-      await execFileAsync('npm' + (process.platform === 'win32' ? '.cmd' : ''), ['pack', '--pack-destination', packageDir], { cwd: repoRoot, env: npmEnv });
+      await execFileAsync(npm, ['pack', '--pack-destination', packageDir], { cwd: repoRoot, env: npmEnv });
     } catch (err) {
       // npm pack should never fail in a non-networked environment — it only reads
       // local files. If it does fail, propagate the error.
@@ -148,7 +160,7 @@ describe('repository integration workflow', () => {
     mkdirSync(consumer);
     cpSync(consumerFixture, consumer, { recursive: true });
     try {
-      await execFileAsync('npm' + (process.platform === 'win32' ? '.cmd' : ''), ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
+      await execFileAsync(npm, ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
         cwd: consumer,
         env: npmEnv,
       });
@@ -159,15 +171,21 @@ describe('repository integration workflow', () => {
       }
       throw new Error(`npm install from tarball failed: ${err.message}. If this is an offline environment, set OFFLINE_TEST=1.`);
     }
-    const version = spawnSync(join(consumer, 'node_modules', '.bin', 'codexa'), ['--version'], {
+    // On Windows the shim in .bin is "codexa.cmd"; on Unix it is "codexa".
+    // Windows also requires shell:true when invoking .cmd scripts via spawnSync.
+    const packagedCli = join(consumer, 'node_modules', '.bin', 'codexa' + binSuffix);
+    const spawnOpts = (extra = {}) => ({
       cwd: consumer,
       encoding: 'utf8',
+      shell: process.platform === 'win32',
+      ...extra,
     });
+
+    const version = spawnSync(packagedCli, ['--version'], spawnOpts());
     expect(version.status).toBe(0);
     expect(version.stdout).toContain('codexa 1.1.3');
 
-    const packagedCli = join(consumer, 'node_modules', '.bin', 'codexa');
-    const help = spawnSync(packagedCli, ['--help'], { cwd: consumer, encoding: 'utf8' });
+    const help = spawnSync(packagedCli, ['--help'], spawnOpts());
     expect(help.status).toBe(0);
     expect(help.stdout).toContain('Initialize Codexa');
 
@@ -177,12 +195,13 @@ describe('repository integration workflow', () => {
     git(consumer, ['add', '.']);
     git(consumer, ['commit', '-m', 'initial']);
     const packageEnv = { ...npmEnv, CODEXA_HOME: join(packageDir, '.codexa-home') };
-    const init = spawnSync(packagedCli, ['init'], { cwd: consumer, encoding: 'utf8', env: packageEnv });
+
+    const init = spawnSync(packagedCli, ['init'], spawnOpts({ env: packageEnv }));
     expect(init.status).toBe(0);
 
     writeFileSync(join(consumer, 'src', 'index.js'), 'export const answer = 43;\n', 'utf8');
     git(consumer, ['add', 'src/index.js']);
-    const check = spawnSync(packagedCli, ['check', '--ci'], { cwd: consumer, encoding: 'utf8', env: packageEnv });
+    const check = spawnSync(packagedCli, ['check', '--ci'], spawnOpts({ env: packageEnv }));
     expect(check.status).toBe(0);
     expect(JSON.parse(check.stdout).result).toBe('clean');
   }, 180000);

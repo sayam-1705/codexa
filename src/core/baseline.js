@@ -46,6 +46,8 @@ function baselinePath(repoPath) {
 export function loadBaseline(repoPath) {
   const path = baselinePath(repoPath);
   if (!existsSync(path)) return null;
+  const data = JSON.parse(readFileSync(path, 'utf8'));
+  if (!Array.isArray(data.fingerprints)) throw new Error('Invalid Codexa baseline: fingerprints must be an array.');
   
   let data;
   try {

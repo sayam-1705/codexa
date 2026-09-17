@@ -22,6 +22,7 @@ const MyLanguageAdapter = {
   /**
    * Adapter metadata — displayed in CLI and used for routing
    */
+  apiVersion: 1,                          // Must be 1
   name: 'MyLanguage',                           // Human-friendly display name
   language: 'mylang',                            // Canonical ID (snake_case)
   version: '0.1.0',                              // Adapter version

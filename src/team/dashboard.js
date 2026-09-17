@@ -34,8 +34,6 @@ export function getDashboardData(repoPath, db, config) {
     };
   });
 
-  // Calculate trend per contributor (improving/stable/declining)
-  // For now, use streak direction as proxy. Future: compare blocked runs in last 10 vs prior 10
   const contributorsWithTrend = contributors.map((c) => ({
     ...c,
     trend: c.currentStreak > 0 ? 'improving' : c.blockedRuns > 0 ? 'declining' : 'stable',
@@ -45,7 +43,7 @@ export function getDashboardData(repoPath, db, config) {
   const hotspots = summary.codebase.hotspots || [];
 
   // Get leaderboard (only opted-in contributors)
-  const optedInEmails = (config.team?.leaderboardOptIn || []).filter((email) =>
+  const optedInEmails = (config.team?.leaderboard?.optIn || []).filter((email) =>
     contributors.some((c) => c.email === email)
   );
 
@@ -76,7 +74,6 @@ export function getDashboardData(repoPath, db, config) {
           : 0,
       totalErrorsFound: contributors.reduce((sum, c) => sum + c.totalErrorsFound, 0),
       totalFixesAccepted: contributors.reduce((sum, c) => sum + c.totalFixesAccepted, 0),
-      mostActiveDays: [] // Placeholder for future calendar heatmap
     },
   };
 }

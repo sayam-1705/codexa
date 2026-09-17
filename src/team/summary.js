@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, renameSync, mkdtempSync, rmSync, mkdirSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { withFileLock } from '../core/fileLock.js';
+import { detectHotspots, mergeHotspots } from './hotspot.js';
 
 const SUMMARY_PATH = '.codexa/codexa-summary.json';
 
@@ -140,6 +141,15 @@ function updateSummaryUnlocked(repoPath, runResult, authorEmail, authorName) {
   // Update codebase totals
   summary.codebase.totalRuns += 1;
   summary.codebase.lastUpdated = now;
+
+  // Calculate hotspots
+  const allErrors = [
+    ...(runResult.blocking || []),
+    ...(runResult.warnings || []),
+    ...(runResult.minor || []),
+  ];
+  const newHotspots = detectHotspots(allErrors);
+  summary.codebase.hotspots = mergeHotspots(summary.codebase.hotspots, newHotspots);
 
   // Recalculate codebase topRules
   const allRules = {};

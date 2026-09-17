@@ -1,4 +1,5 @@
 export default {
+  apiVersion: 1,
   name: 'Fixture Adapter',
   language: 'fixture',
   version: '1.0.0',

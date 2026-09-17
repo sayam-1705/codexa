@@ -93,6 +93,10 @@ export function validateAdapter(adapter) {
   }
 
   // Check required metadata as errors (needed for proper adapter operation)
+  if (adapter.apiVersion !== 1) {
+    errors.push('adapter.apiVersion must be 1. Ensure adapter explicitly declares API compatibility.');
+  }
+
   if (!adapter.name || typeof adapter.name !== 'string' || adapter.name.trim() === '') {
     errors.push('adapter.name is missing, empty, or not a string');
   }

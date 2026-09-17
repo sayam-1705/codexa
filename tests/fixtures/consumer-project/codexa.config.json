@@ -16,7 +16,7 @@
     "blockThreshold": 1,
     "leaderboard": {
       "enabled": false,
-      "optIn": false
+      "optIn": []
     }
   },
   "ci": {

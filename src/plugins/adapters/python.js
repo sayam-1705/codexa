@@ -9,6 +9,7 @@ import { resolve } from 'path';
 
 const adapter = {
   // Metadata
+  apiVersion: 1,
   name: 'Python',
   language: 'python',
   version: '0.1.0',

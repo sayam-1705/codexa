@@ -4,6 +4,7 @@ import { validateAdapter, validateLintResult } from '../src/plugins/interface.js
 describe('LinterAdapter Interface', () => {
   it('validateAdapter returns valid=true for correctly shaped adapter', () => {
     const adapter = {
+      apiVersion: 1,
       name: 'Test',
       language: 'test',
       version: '1.0.0',
@@ -23,6 +24,7 @@ describe('LinterAdapter Interface', () => {
 
   it('validateAdapter returns errors when detect is not a function', () => {
     const adapter = {
+      apiVersion: 1,
       name: 'Test',
       language: 'test',
       detect: 'not a function',
@@ -38,6 +40,7 @@ describe('LinterAdapter Interface', () => {
 
   it('validateAdapter returns errors when lint is not a function', () => {
     const adapter = {
+      apiVersion: 1,
       name: 'Test',
       language: 'test',
       detect: async () => true,
@@ -53,6 +56,7 @@ describe('LinterAdapter Interface', () => {
 
   it('validateAdapter returns errors when fix is not a function', () => {
     const adapter = {
+      apiVersion: 1,
       name: 'Test',
       language: 'test',
       detect: async () => true,
@@ -82,6 +86,7 @@ describe('LinterAdapter Interface', () => {
 
   it('rejects an adapter when extensions are missing', () => {
     const adapter = {
+      apiVersion: 1,
       name: 'Test',
       language: 'test',
       detect: async () => true,
@@ -114,6 +119,7 @@ describe('LinterAdapter Interface', () => {
 
   it('validateAdapter returns valid=false when all three methods missing', () => {
     const adapter = {
+      apiVersion: 1,
       name: 'Test',
       language: 'test',
     };

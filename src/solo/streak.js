@@ -93,10 +93,10 @@ export function getStreakDisplay(repoPath) {
     display = `✓ ${currentStreak}-commit clean run`;
     level = 'clean';
   } else if (currentStreak < 15) {
-    display = `🔥 ${currentStreak}-day streak`;
+    display = `🔥 ${currentStreak}-commit streak`;
     level = 'hot';
   } else {
-    display = `💎 ${currentStreak}-day legendary streak!`;
+    display = `💎 ${currentStreak}-commit legendary streak!`;
     level = 'legendary';
   }
 

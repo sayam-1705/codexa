@@ -10,6 +10,7 @@ import { resolve } from 'path';
 
 const adapter = {
   // Metadata
+  apiVersion: 1,
   name: 'JavaScript / TypeScript',
   language: 'javascript',
   version: '0.1.0',

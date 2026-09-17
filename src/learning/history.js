@@ -61,7 +61,7 @@ export function logCommitCheck(repoPath, summary) {
       writeFileSync(tempPath, JSON.stringify(history, null, 2), 'utf8');
       renameSync(tempPath, historyPath);
     } finally {
-      rmSync(tempDir, { recursive: true, force: true });
+      rmSync(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }
 
     return entry;

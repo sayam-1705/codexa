@@ -11,7 +11,7 @@ describe('profiles/javascript.js', () => {
   });
 
   afterAll(() => {
-    rmSync(tempDir, { recursive: true, force: true });
+    rmSync(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
 
   it('lints a .tsx file with interfaces/generics without throwing parse errors', async () => {

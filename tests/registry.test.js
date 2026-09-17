@@ -23,7 +23,7 @@ describe('Adapter Registry', () => {
     delete process.env.CODEXA_HOME;
     if (testHomeDir && existsSync(testHomeDir)) {
       try {
-        rmSync(testHomeDir, { recursive: true, force: true });
+        rmSync(testHomeDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
       } catch (e) {
         // Ignore
       }

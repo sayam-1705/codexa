@@ -317,7 +317,7 @@ describe('.codexaignore augments configured ignore patterns', () => {
       //  loadConfig requires a full config file to be present.)
       expect(patterns.length).toBe(2);
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }
   });
 
@@ -328,7 +328,7 @@ describe('.codexaignore augments configured ignore patterns', () => {
       const patterns = await getIgnorePatterns(dir);
       expect(patterns).toHaveLength(0);
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }
   });
 });

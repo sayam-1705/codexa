@@ -14,7 +14,7 @@ describe('Pattern Storage', () => {
 
   afterEach(() => {
     if (testRepo && existsSync(testRepo)) {
-      rmSync(testRepo, { recursive: true, force: true });
+      rmSync(testRepo, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }
   });
 

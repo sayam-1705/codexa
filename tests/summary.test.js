@@ -17,7 +17,7 @@ describe('Team Summary', () => {
     // Clean up any previous test directory
     if (currentTestDir && existsSync(currentTestDir)) {
       try {
-        rmSync(currentTestDir, { recursive: true, force: true });
+        rmSync(currentTestDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
       } catch (err) {
         // Ignore if cleanup fails
       }
@@ -35,7 +35,7 @@ describe('Team Summary', () => {
     testDirs.forEach((dir) => {
       try {
         if (existsSync(dir)) {
-          rmSync(dir, { recursive: true, force: true });
+          rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
         }
       } catch (err) {
         // Ignore cleanup errors

@@ -125,7 +125,7 @@ async function fixWithEslint(error) {
       message: `ESLint error: ${err.message}`,
     };
   } finally {
-    if (tempDir) rmSync(tempDir, { recursive: true, force: true });
+    if (tempDir) rmSync(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
 
@@ -186,7 +186,7 @@ async function fixWithRuff(error) {
       message: `ruff error: ${err.message}`,
     };
   } finally {
-    if (tempDir) rmSync(tempDir, { recursive: true, force: true });
+    if (tempDir) rmSync(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
 

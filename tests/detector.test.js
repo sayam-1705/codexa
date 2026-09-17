@@ -21,7 +21,7 @@ describe('detectLanguages', () => {
   });
 
   afterAll(() => {
-    rmSync(testDir, { recursive: true, force: true });
+    rmSync(testDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
 
   it(

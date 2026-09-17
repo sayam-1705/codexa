@@ -38,7 +38,7 @@ import { saveBaseline, loadBaseline, fingerprintFinding } from '../src/core/base
 const tempDirs = [];
 afterEach(() => {
   while (tempDirs.length) {
-    try { rmSync(tempDirs.pop(), { recursive: true, force: true }); } catch { /* ignore */ }
+    rmSync(tempDirs.pop(), { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });
 

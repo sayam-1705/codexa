@@ -14,10 +14,17 @@ export function runGit(args, repoPath = process.cwd(), options = {}) {
   }
 }
 
+function normalizeGitPath(p) {
+  if (process.platform === 'win32' && p.match(/^\/[a-zA-Z]\//)) {
+    return p.charAt(1).toUpperCase() + ':' + p.slice(2);
+  }
+  return p;
+}
+
 export function gitPath(repoPath, name) {
-  return runGit(['rev-parse', '--git-path', name], repoPath).trim();
+  return normalizeGitPath(runGit(['rev-parse', '--git-path', name], repoPath).trim());
 }
 
 export function repositoryRoot(repoPath = process.cwd()) {
-  return runGit(['rev-parse', '--show-toplevel'], repoPath).trim();
+  return normalizeGitPath(runGit(['rev-parse', '--show-toplevel'], repoPath).trim());
 }

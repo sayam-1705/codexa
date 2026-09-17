@@ -230,6 +230,6 @@ function writeSummaryAtomic(repoPath, summary) {
   } catch (err) {
     throw new Error(`Failed to write summary: ${err.message}`);
   } finally {
-    rmSync(tempDir, { recursive: true, force: true });
+    rmSync(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }

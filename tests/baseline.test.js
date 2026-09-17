@@ -46,7 +46,7 @@ describe('baseline fingerprints', () => {
       expect(loadBaseline(repo)).toBeInstanceOf(Set);
       expect(getBaselineVersion(repo)).toBe(2);
     } finally {
-      rmSync(repo, { recursive: true, force: true });
+      rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }
   });
 });

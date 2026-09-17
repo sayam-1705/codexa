@@ -15,7 +15,7 @@ describe('Built-in Adapters', () => {
 
   afterEach(() => {
     try {
-      rmSync(testDir, { recursive: true, force: true });
+      rmSync(testDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     } catch (e) {
       // Ignore cleanup errors
     }

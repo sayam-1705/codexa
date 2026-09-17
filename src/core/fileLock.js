@@ -21,6 +21,6 @@ export function withFileLock(filePath, callback, timeoutMs = 5000) {
   try {
     return callback();
   } finally {
-    rmSync(lockPath, { recursive: true, force: true });
+    rmSync(lockPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }

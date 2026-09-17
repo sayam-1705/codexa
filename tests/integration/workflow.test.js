@@ -120,12 +120,18 @@ describe('repository integration workflow', () => {
     writeFileSync(fakeCodexa, '#!/bin/sh\nprintf codexa > "$CODEXA_CODEX_MARKER"\nexit 0\n', 'utf8');
     chmodSync(fakeCodexa, 0o755);
 
-    const hookRun = spawnSync(hook, [], {
+    // On Windows, Node cannot natively execute a #!/bin/sh script.
+    // We must simulate Git Bash explicitly.
+    const isWin = process.platform === 'win32';
+    const hookCmd = isWin ? 'bash' : hook;
+    const hookArgs = isWin ? [hook] : [];
+
+    const hookRun = spawnSync(hookCmd, hookArgs, {
       cwd: repo,
       encoding: 'utf8',
       env: {
         ...process.env,
-        PATH: `${fakeBin}:${process.env.PATH}`,
+        PATH: `${fakeBin}${require('path').delimiter}${process.env.PATH}`,
         CODEXA_HOOK_MARKER: originalMarker,
         CODEXA_CODEX_MARKER: join(repo, 'codexa-hook-ran'),
       },
@@ -148,8 +154,9 @@ describe('repository integration workflow', () => {
       return;
     }
     const npmEnv = { ...process.env, npm_config_cache: join(packageDir, '.npm-cache') };
+    const execOpts = { cwd: repoRoot, env: npmEnv, shell: process.platform === 'win32' };
     try {
-      await execFileAsync(npm, ['pack', '--pack-destination', packageDir], { cwd: repoRoot, env: npmEnv });
+      await execFileAsync(npm, ['pack', '--pack-destination', packageDir], execOpts);
     } catch (err) {
       // npm pack should never fail in a non-networked environment — it only reads
       // local files. If it does fail, propagate the error.
@@ -161,8 +168,8 @@ describe('repository integration workflow', () => {
     cpSync(consumerFixture, consumer, { recursive: true });
     try {
       await execFileAsync(npm, ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
+        ...execOpts,
         cwd: consumer,
-        env: npmEnv,
       });
     } catch (err) {
       if (process.env.OFFLINE_TEST === '1') {

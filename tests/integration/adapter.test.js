@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { loadAdapter } from '../../src/plugins/loader.js';
 import { validateAdapter } from '../../src/plugins/interface.js';
 import { join, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
-const fixture = resolve(new URL('../fixtures/community-adapter', import.meta.url).pathname);
+const fixture = resolve(fileURLToPath(new URL('../fixtures/community-adapter', import.meta.url)));
 
 describe('community adapter integration', () => {
   it('loads, detects, lints, and exposes the fix contract', async () => {

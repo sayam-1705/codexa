@@ -54,7 +54,9 @@ function createRepository() {
 }
 
 afterEach(() => {
-  while (tempRepos.length) rmSync(tempRepos.pop(), { recursive: true, force: true });
+  while (tempRepos.length) {
+    rmSync(tempRepos.pop(), { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }
 });
 
 describe('repository integration workflow', () => {
@@ -67,11 +69,17 @@ describe('repository integration workflow', () => {
     expect(existsSync(join(repo, '.git', 'hooks', 'pre-commit'))).toBe(true);
 
     const source = join(repo, 'src', 'index.js');
+    writeFileSync(source, 'export const answer = missingValue;\n', 'utf8');
+    const fullCheck = runCli(repo, ['check', '--ci']);
+    expect(fullCheck.status).toBe(1);
+    expect(JSON.parse(fullCheck.stdout).result).toBe('blocked');
+    expect(JSON.parse(fullCheck.stdout).blocking.some((finding) => finding.rule === 'no-undef')).toBe(true);
+
     writeFileSync(source, 'export const answer = 43;\n', 'utf8');
     git(repo, ['add', source]);
     writeFileSync(source, 'export const answer = ;\n', 'utf8');
 
-    const stagedCheck = runCli(repo, ['check', '--ci']);
+    const stagedCheck = runCli(repo, ['check', '--ci', '--staged']);
     expect(stagedCheck.status).toBe(0);
     if (!stagedCheck.stdout) throw stagedCheck.error || new Error(`CI command produced no stdout: ${stagedCheck.stderr}`);
     expect(JSON.parse(stagedCheck.stdout).result).toBe('clean');
@@ -123,9 +131,13 @@ describe('repository integration workflow', () => {
     tempRepos.push(packageDir);
     // Keep npm's cache inside the disposable test directory. This makes the
     // packaging smoke test work in read-only home-directory environments too.
+    if (process.env.OFFLINE_TEST === '1') {
+      console.warn(`LIVE PACKAGE SMOKE TEST: SKIPPED (offline test flag set)`);
+      return;
+    }
     const npmEnv = { ...process.env, npm_config_cache: join(packageDir, '.npm-cache') };
     try {
-      await execFileAsync('npm', ['pack', '--pack-destination', packageDir], { cwd: repoRoot, env: npmEnv });
+      await execFileAsync('npm' + (process.platform === 'win32' ? '.cmd' : ''), ['pack', '--pack-destination', packageDir], { cwd: repoRoot, env: npmEnv });
     } catch (err) {
       // npm pack should never fail in a non-networked environment — it only reads
       // local files. If it does fail, propagate the error.
@@ -136,7 +148,7 @@ describe('repository integration workflow', () => {
     mkdirSync(consumer);
     cpSync(consumerFixture, consumer, { recursive: true });
     try {
-      await execFileAsync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
+      await execFileAsync('npm' + (process.platform === 'win32' ? '.cmd' : ''), ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
         cwd: consumer,
         env: npmEnv,
       });

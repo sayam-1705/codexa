@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import chalk from 'chalk';
 import ora from 'ora';
@@ -6,7 +6,7 @@ import { detectLanguages } from '../core/detector.js';
 import { discoverSupportedFiles } from '../core/files.js';
 import { saveBaseline } from '../core/baseline.js';
 import { repositoryRoot } from '../git/command.js';
-import { installHook, isHookInstalled } from '../git/hooks.js';
+import { installHook, isHookInstalled, removeHook } from '../git/hooks.js';
 import { loadConfig, createDefaultConfig } from '../team/config.js';
 
 export async function initCommand(options) {
@@ -155,11 +155,24 @@ src/legacy/
         demoSpinner.fail('Initial scan failed');
         throw new Error(`Initial scan failed: ${err.message}`);
       }
+    } else {
+      console.error(chalk.dim('No supported files were available for the initial scan.'));
+      process.exitCode = 1;
     }
   } catch (err) {
     console.error(chalk.red(`\n✗ ${err.message}`));
     console.error(chalk.dim('  Fix: resolve the analyzer or Git error, then rerun codexa init.'));
     process.exitCode = 1;
+  }
+
+  if (!baselineReady) {
+    try {
+      removeHook(repoPath);
+      rmSync(join(repoPath, '.codexa', 'baseline.json'), { force: true });
+      console.log(chalk.dim('Enforcement state reverted because initialization did not produce a valid baseline.'));
+    } catch (err) {
+      console.error(chalk.red(`Could not remove the incomplete initialization hook: ${err.message}`));
+    }
   }
 
   // Prevent baseline save when adapter failures occurred

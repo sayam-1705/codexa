@@ -1,8 +1,9 @@
 import { simpleGit } from 'simple-git';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
-import { dirname, relative, resolve } from 'path';
+import { dirname, resolve } from 'path';
 import { tmpdir } from 'os';
 import { runGit, repositoryRoot } from './command.js';
+import { relativeRepositoryPath } from '../core/files.js';
 
 export async function getStagedFiles(repoPath) {
   const root = repositoryRoot(repoPath);
@@ -18,7 +19,7 @@ export async function materializeIndexFiles(repoPath, files) {
   const mapping = new Map();
   try {
     for (const file of files) {
-      const relativePath = relative(root, resolve(file));
+      const relativePath = relativeRepositoryPath(file, repoPath);
       const target = resolve(directory, relativePath);
       mkdirSync(dirname(target), { recursive: true });
       const content = runGit(['show', `:${relativePath}`], root, { encoding: 'buffer' });
@@ -26,13 +27,13 @@ export async function materializeIndexFiles(repoPath, files) {
       mapping.set(target, resolve(file));
     }
   } catch (error) {
-    rmSync(directory, { recursive: true, force: true });
+    rmSync(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     throw new Error(`Could not materialize staged content: ${error.message}`);
   }
   return {
     files: [...mapping.keys()],
     mapFinding: finding => ({ ...finding, file: mapping.get(finding.file) || finding.file }),
-    cleanup: () => rmSync(directory, { recursive: true, force: true }),
+    cleanup: () => rmSync(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }),
   };
 }
 

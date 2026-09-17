@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { createHash } from 'crypto';
-import { resolve } from 'path';
+import { relative, resolve } from 'path';
 
 function normalizedMessage(message) {
   return String(message || '').replace(/\s+/g, ' ').trim();
@@ -9,7 +9,7 @@ function normalizedMessage(message) {
 export function fingerprintFinding(finding, repoPath) {
   // Primary v2 fingerprint must be resilient to line movement and other volatile formatting changes.
   const file = String(finding.file || '').replace(/\\/g, '/');
-  const relativeFile = file.startsWith(`${repoPath}/`) ? file.slice(repoPath.length + 1) : file;
+  const relativeFile = relative(repoPath, file).replace(/\\/g, '/');
   const identity = [
     relativeFile,
     finding.rule,
@@ -21,7 +21,7 @@ export function fingerprintFinding(finding, repoPath) {
 
 function fingerprintWithLine(finding, repoPath) {
   const file = String(finding.file || '').replace(/\\/g, '/');
-  const relativeFile = file.startsWith(`${repoPath}/`) ? file.slice(repoPath.length + 1) : file;
+  const relativeFile = relative(repoPath, file).replace(/\\/g, '/');
   const identity = [
     relativeFile,
     finding.line || 0,
@@ -34,7 +34,7 @@ function fingerprintWithLine(finding, repoPath) {
 
 function legacyFingerprint(finding, repoPath) {
   const file = String(finding.file || '').replace(/\\/g, '/');
-  const relativeFile = file.startsWith(`${repoPath}/`) ? file.slice(repoPath.length + 1) : file;
+  const relativeFile = relative(repoPath, file).replace(/\\/g, '/');
   const identity = [relativeFile, finding.rule, finding.code || '', normalizedMessage(finding.message)].join('\0');
   return createHash('sha256').update(identity).digest('hex');
 }
@@ -65,13 +65,38 @@ export function filterBaselineFindings(classified, repoPath, baseline) {
     baseline.has(fingerprintFinding(finding, repoPath)) ||
     baseline.has(fingerprintWithLine(finding, repoPath)) ||
     baseline.has(legacyFingerprint(finding, repoPath));
-  const filter = findings => findings.filter(finding => !isBaselineFinding(finding));
+  
+  const preexisting = [...classified.preexisting];
+  
+  const filterAndMove = findings => findings.filter(finding => {
+    if (isBaselineFinding(finding)) {
+      preexisting.push(finding);
+      return false;
+    }
+    return true;
+  });
+
+  const blocking = filterAndMove(classified.blocking);
+  
+  // We keep warnings and minor in their respective categories to not lose historical info,
+  // but we can optionally add them to preexisting if they match the baseline.
+  // The simplest fix to not lose them is to NOT filter them out.
+  const warnings = classified.warnings.map(finding => {
+    if (isBaselineFinding(finding)) preexisting.push(finding);
+    return finding;
+  });
+  
+  const minor = classified.minor.map(finding => {
+    if (isBaselineFinding(finding)) preexisting.push(finding);
+    return finding;
+  });
+
   return {
     ...classified,
-    blocking: filter(classified.blocking),
-    warnings: filter(classified.warnings),
-    minor: filter(classified.minor),
-    preexisting: [...classified.preexisting, ...classified.blocking.filter(isBaselineFinding)],
+    blocking,
+    warnings,
+    minor,
+    preexisting,
   };
 }
 

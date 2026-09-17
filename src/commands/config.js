@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import { loadConfig, validateConfig, createDefaultConfig } from '../team/config.js';
-import { writeFileSync, existsSync } from 'fs';
+import { loadConfig, validateConfig, createDefaultConfig, mergeWithDefaults } from '../team/config.js';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
 /**
@@ -108,22 +108,37 @@ export async function configSetCommand(keyPath, value) {
   const repoPath = process.cwd();
 
   try {
-    const config = await loadConfig(repoPath);
+    const effectiveConfig = await loadConfig(repoPath);
     const configPath = resolve(repoPath, 'codexa.config.json');
+    if (!existsSync(configPath)) {
+      throw new Error('codexa.config.json does not exist; run codexa config init first.');
+    }
+    const config = JSON.parse(readFileSync(configPath, 'utf8'));
 
     // Parse dot notation key
     const keys = keyPath.split('.');
     let current = config;
+    let effectiveCurrent = effectiveConfig;
 
     for (let i = 0; i < keys.length - 1; i++) {
-      if (!(keys[i] in current)) {
+      if (!(keys[i] in effectiveCurrent)) {
+        throw new Error(`Unknown configuration field: ${keys.slice(0, i + 1).join('.')}`);
+      }
+      if (current[keys[i]] === undefined) {
         current[keys[i]] = {};
       }
+      if (!current[keys[i]] || typeof current[keys[i]] !== 'object' || Array.isArray(current[keys[i]])) {
+        throw new Error(`Configuration field is not an object: ${keys.slice(0, i + 1).join('.')}`);
+      }
       current = current[keys[i]];
+      effectiveCurrent = effectiveCurrent[keys[i]];
     }
 
     // Set value (attempt type conversion)
     const lastKey = keys[keys.length - 1];
+    if (!(lastKey in effectiveCurrent)) {
+      throw new Error(`Unknown configuration field: ${keyPath}`);
+    }
     if (value === 'true') {
       current[lastKey] = true;
     } else if (value === 'false') {
@@ -135,7 +150,7 @@ export async function configSetCommand(keyPath, value) {
     }
 
     // Validate before writing
-    const validation = validateConfig(config);
+    const validation = validateConfig(mergeWithDefaults(config));
     if (!validation.valid) {
       console.log(chalk.red('✖ Invalid value. codexa.config.json would become invalid:'));
       for (const error of validation.errors) {

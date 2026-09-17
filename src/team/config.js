@@ -37,6 +37,7 @@ const DEFAULT_CONFIG = {
     badge: true,
   },
   adapterFailurePolicy: 'fail',
+  adapterTimeoutMs: 30000,
   _codexaSchema: 2,
 };
 
@@ -62,7 +63,6 @@ export async function loadConfig(repoPath) {
   let config = structuredClone(DEFAULT_CONFIG);
 
   if (result && result.config) {
-    // Deep merge found config over defaults
     config = deepMerge(DEFAULT_CONFIG, result.config);
   }
 
@@ -232,6 +232,11 @@ export function validateConfig(config) {
     }
   }
 
+  if (config.adapterTimeoutMs !== undefined &&
+      (!Number.isInteger(config.adapterTimeoutMs) || config.adapterTimeoutMs <= 0)) {
+    errors.push(`adapterTimeoutMs must be a positive integer (got: ${config.adapterTimeoutMs})`);
+  }
+
   // Check CI settings
   if (config.ci !== undefined) {
     if (config.ci === null || typeof config.ci !== 'object' || Array.isArray(config.ci)) {
@@ -346,6 +351,10 @@ export function createDefaultConfig(repoPath, options = {}) {
  */
 export async function getEffectiveConfig(repoPath) {
   return await loadConfig(repoPath);
+}
+
+export function mergeWithDefaults(config) {
+  return deepMerge(DEFAULT_CONFIG, config);
 }
 
 // Helper functions

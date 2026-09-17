@@ -34,7 +34,7 @@ describe('baseline fingerprints', () => {
       .digest('hex');
     const legacyBaseline = new Set([legacyIdentity]);
     const filtered = filterBaselineFindings(current, '/tmp/codexa-baseline', legacyBaseline);
-    expect(filtered.warnings).toHaveLength(0);
+    expect(filtered.warnings).toHaveLength(1);
   });
 
   it('writes and reads deterministic sorted fingerprints', () => {

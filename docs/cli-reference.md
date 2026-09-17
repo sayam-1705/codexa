@@ -65,8 +65,9 @@ Runs lint checks on staged files by default and opens the interactive TUI in ter
 Flags:
 
 - `--ci` (boolean, default: `false`) Force CI mode.
-- `--base <branch>` (string, default: unset) Compare against a base branch when combined with CI/all-files workflows.
-- `--all-files` (boolean, default: `false`) Check all supported files.
+- `--base <branch>` (string, default: unset) Compare all supported files against a base branch.
+- `--all-files` (boolean) Explicitly request the full supported repository scan; this is the default in CI mode.
+- `--staged` (boolean) In CI mode, explicitly use staged index content instead of the full repository.
 - `--output <fmt>` (string, default: `json`) CI output format hint (`json | text`).
 
 Examples:

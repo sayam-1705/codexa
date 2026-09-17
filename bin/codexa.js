@@ -46,7 +46,8 @@ async function checkCommand(options) {
     // CI mode
     if (options.ci) {
       const result = await runCICheck(repoPath, config, {
-        allFiles: options.allFiles,
+        allFiles: options.allFiles !== false,
+        staged: options.staged,
         baseBranch: options.base,
         outputFormat: options.output,
       });
@@ -148,7 +149,8 @@ program
   .description('Run linters on staged files (called by pre-commit hook)')
   .option('--ci', 'Force CI mode (JSON output, no TUI)')
   .option('--base <branch>', 'Compare against base branch')
-  .option('--all-files', 'Lint all files not just staged')
+  .option('--all-files', 'Lint all supported repository files (default in CI mode)')
+  .option('--staged', 'In CI mode, lint only staged index content')
   .option('--output <fmt>', 'json | text (default: json in CI mode)', 'json')
   .action(checkCommand);
 

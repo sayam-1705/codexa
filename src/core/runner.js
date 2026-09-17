@@ -83,8 +83,14 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
       return { adapter, errors: [] };
     }
 
+    let timeoutId;
     try {
-      return { adapter, errors: await adapter.lint(adapterFiles, config) };
+      const lintPromise = adapter.lint(adapterFiles, config);
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Adapter lint() timed out after 30 seconds')), 30000);
+      });
+      const errors = await Promise.race([lintPromise, timeoutPromise]);
+      return { adapter, errors };
     } catch (error) {
       return {
         adapter,
@@ -96,6 +102,8 @@ async function runLinterInternal(stagedFiles, repoPath = process.cwd(), config =
           error: error.message,
         },
       };
+    } finally {
+      clearTimeout(timeoutId);
     }
   });
 

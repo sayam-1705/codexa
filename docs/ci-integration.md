@@ -1,6 +1,6 @@
 # CI Integration
 
-Codexa supports CI mode for pull requests and merge gates.
+Codexa supports CI mode for pull requests and merge gates. `codexa check --ci` scans the full supported repository even when the checkout has no staged files. Use `--base` to narrow that scan to files changed from a base branch, or `--staged` only when an index snapshot is intentional.
 
 ## Basic GitHub Actions Workflow
 

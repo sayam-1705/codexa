@@ -1,9 +1,9 @@
 import { runLinter } from '../core/runner.js';
 import { runGit } from '../git/command.js';
 import { readFileSync } from 'fs';
-import { relative } from 'path';
-import { isAbsolute } from 'path';
+import { relative, isAbsolute, resolve } from 'path';
 import { getStagedFiles } from '../git/diff.js';
+import { repositoryRoot } from '../git/command.js';
 import { discoverSupportedFiles } from '../core/files.js';
 import { filterBaselineFindings, loadBaseline } from '../core/baseline.js';
 
@@ -16,12 +16,14 @@ const CODEXA_VERSION = JSON.parse(readFileSync(new URL('../../package.json', imp
  * @param {Object} options - { allFiles, baseBranch, outputFormat }
  */
 export async function runCICheck(repoPath, config, options = {}) {
-  const { allFiles, baseBranch, outputFormat } = options;
+  const { allFiles = true, baseBranch, outputFormat, staged = false } = options;
 
   try {
     let stagedFiles = [];
 
-    if (allFiles) {
+    if (staged || allFiles === false) {
+      stagedFiles = await getStagedFiles(repoPath);
+    } else if (allFiles) {
       // Get all supported files from repo
       stagedFiles = await discoverSupportedFiles(repoPath, config);
 
@@ -29,14 +31,11 @@ export async function runCICheck(repoPath, config, options = {}) {
         // Filter to only changed files in diff
         stagedFiles = getChangedFiles(repoPath, baseBranch, stagedFiles);
       }
-    } else {
-      // Get staged files (default git check mode)
-      stagedFiles = await getStagedFiles(repoPath);
     }
 
     // Run linter
     const baseline = loadBaseline(repoPath);
-    const scanConfig = allFiles ? config : { ...config, snapshot: 'index' };
+    const scanConfig = staged ? { ...config, snapshot: 'index' } : config;
     const classified = filterBaselineFindings(await runLinter(stagedFiles, repoPath, scanConfig), repoPath, baseline);
 
     // Format output
@@ -213,10 +212,11 @@ export function formatTextOutput(result, repoPath, config) {
 // Helper functions
 
 function getChangedFiles(repoPath, baseBranch, allFiles) {
-    const target = baseBranch.startsWith('origin/') ? baseBranch : `origin/${baseBranch}`;
-    const output = runGit(['diff', `${target}...HEAD`, '--name-only'], repoPath);
-    const changedSet = new Set(output.split('\n').filter((f) => f.length > 0));
-    return allFiles.filter(file => changedSet.has(relative(repoPath, file).replace(/\\/g, '/')));
+  const root = repositoryRoot(repoPath);
+  const target = baseBranch.startsWith('origin/') ? baseBranch : `origin/${baseBranch}`;
+  const output = runGit(['diff', `${target}...HEAD`, '--name-only', '-z', '--'], root);
+  const changedSet = new Set(output.split('\0').filter(Boolean).map(file => resolve(root, file).replace(/\\/g, '/').toLowerCase()));
+  return allFiles.filter(file => changedSet.has(resolve(root, file).replace(/\\/g, '/').toLowerCase()));
 }
 
 function getCurrentBranch(repoPath) {

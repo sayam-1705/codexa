@@ -4,7 +4,7 @@
 
 import { validateAdapter, validateLintResult } from './interface.js';
 import { homedir } from 'os';
-import { resolve } from 'path';
+import { resolve, isAbsolute } from 'path';
 import { existsSync } from 'fs';
 import { createRequire } from 'module';
 import { pathToFileURL } from 'url';
@@ -28,8 +28,12 @@ export async function loadAdapter(packageNameOrPath, customBaseDir = null) {
   } else {
     // Dynamic import of community adapter npm package or local file path
     try {
-      if (packageNameOrPath.startsWith('.') || packageNameOrPath.startsWith('/')) {
-        const module = await import(packageNameOrPath);
+        const isWindowsAbsolute = /^[A-Za-z]:[\\/]/.test(packageNameOrPath);
+        if (isAbsolute(packageNameOrPath) || isWindowsAbsolute || packageNameOrPath.startsWith('.')) {
+          const adapterPath = isAbsolute(packageNameOrPath) || isWindowsAbsolute
+            ? packageNameOrPath
+            : resolve(customBaseDir || process.cwd(), packageNameOrPath);
+          const module = await import(pathToFileURL(adapterPath).href);
         adapterModule = module.default || module;
       } else {
         const baseDir = customBaseDir || process.env.CODEXA_HOME || resolve(homedir(), '.codexa');
@@ -99,8 +103,21 @@ export async function loadAdapter(packageNameOrPath, customBaseDir = null) {
   // Wrap lint() with error handling
   const originalLint = adapterModule.lint;
   const wrappedLint = async (files, config) => {
+    const configuredTimeout = Number(config?.adapterTimeoutMs);
+    const timeoutMs = Number.isFinite(configuredTimeout) && configuredTimeout > 0
+      ? configuredTimeout
+      : 30_000;
+    let timeout;
     try {
-      const results = await originalLint(files, config);
+      const results = await Promise.race([
+        originalLint(files, config),
+        new Promise((_, reject) => {
+          timeout = setTimeout(
+            () => reject(new Error(`lint() exceeded ${timeoutMs}ms timeout`)),
+            timeoutMs
+          );
+        }),
+      ]);
       // Validate lint result structure
       const validation = validateLintResult(results);
       if (!validation.valid) {
@@ -109,6 +126,8 @@ export async function loadAdapter(packageNameOrPath, customBaseDir = null) {
       return results;
     } catch (err) {
       throw new Error(`[${adapterModule.name || 'unknown'}] lint() failed: ${err.message}`, { cause: err });
+    } finally {
+      clearTimeout(timeout);
     }
   };
 

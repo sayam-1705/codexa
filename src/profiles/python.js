@@ -14,7 +14,11 @@ export async function lintPython(files) {
   }
 
   try {
-    const { stdout } = await execFileAsync('ruff', ['check', '--output-format=json', ...pyFiles]);
+    const { stdout } = await execFileAsync('ruff', ['check', '--output-format=json', ...pyFiles], {
+      timeout: 30_000,
+      killSignal: 'SIGTERM',
+      maxBuffer: 10 * 1024 * 1024,
+    });
     let results = [];
     if (stdout.trim()) {
       results = JSON.parse(stdout);
@@ -37,6 +41,9 @@ export async function lintPython(files) {
 
     return errors;
   } catch (err) {
+    if (err.code === 'ETIMEDOUT' || err.killed) {
+      throw new Error('ruff exceeded the 30000ms timeout and was terminated.');
+    }
     if (err.code === 'ENOENT') {
       throw new Error(
         'ruff is not installed or not on PATH.\n' +

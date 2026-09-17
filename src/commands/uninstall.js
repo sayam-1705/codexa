@@ -44,26 +44,26 @@ export async function uninstallCommand(options) {
 
   const configPath = resolve(repoPath, 'codexa.config.json');
   if (existsSync(configPath)) {
-    rmSync(configPath);
+    rmSync(configPath, { force: true, maxRetries: 3, retryDelay: 100 });
     actions.push('Deleted codexa.config.json.');
   }
 
   const ignorePath = resolve(repoPath, '.codexaignore');
   if (existsSync(ignorePath)) {
-    rmSync(ignorePath);
+    rmSync(ignorePath, { force: true, maxRetries: 3, retryDelay: 100 });
     actions.push('Deleted .codexaignore.');
   }
 
   const codexaDir = resolve(repoPath, '.codexa');
   if (existsSync(codexaDir)) {
-    rmSync(codexaDir, { recursive: true, force: true });
+    rmSync(codexaDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     actions.push('Deleted .codexa/ directory.');
   }
 
   if (purgeGlobal) {
     const globalDir = resolve(homedir(), '.codexa');
     if (existsSync(globalDir)) {
-      rmSync(globalDir, { recursive: true, force: true });
+      rmSync(globalDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
       actions.push('Deleted global ~/.codexa/ directory.');
     }
   }

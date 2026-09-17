@@ -74,8 +74,18 @@ jobs:
           npx codexa --version | grep "${VERSION}"
           npx codexa --help
           git init
+          mkdir -p src
+          printf 'export const answer = 42;\n' > src/index.js
+          git add src/index.js
+          git -c user.name='Codexa Release' -c user.email='release@example.test' commit -m 'initial fixture'
           npx codexa init
-          npx codexa check --ci
+          printf 'export const answer = missingValue;\n' > src/index.js
+          set +e
+          npx codexa check --ci --all-files > release-check.json
+          STATUS=$?
+          set -e
+          test "$STATUS" -eq 1
+          node -e "const r=require('./release-check.json'); if(r.result !== 'blocked' || r.summary.filesChecked < 1) process.exit(1)"
 
       - name: Generate Homebrew formula for the published tag
         run: |

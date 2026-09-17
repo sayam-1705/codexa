@@ -70,5 +70,18 @@ function selectAdapters(adapters, languages = ['auto']) {
 }
 
 export function relativeRepositoryPath(filePath, repoPath) {
-  return relative(repositoryRoot(repoPath), resolve(filePath)).replace(/\\/g, '/');
+  let root = repositoryRoot(repoPath);
+  let resolvedFile = resolve(filePath);
+  
+  if (process.platform === 'win32') {
+    // Normalize drive letters to uppercase to avoid relative() bailing out
+    if (root.match(/^[a-zA-Z]:/)) {
+      root = root.charAt(0).toUpperCase() + root.slice(1);
+    }
+    if (resolvedFile.match(/^[a-zA-Z]:/)) {
+      resolvedFile = resolvedFile.charAt(0).toUpperCase() + resolvedFile.slice(1);
+    }
+  }
+  
+  return relative(root, resolvedFile).replace(/\\/g, '/');
 }

@@ -9,6 +9,8 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, rmSync 
 import { execFileSync } from 'child_process';
 import { loadAdapter } from './loader.js';
 
+const npmExecutable = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
 function getRegistryPath() {
   const baseDir = process.env.CODEXA_HOME || resolve(homedir(), '.codexa');
   return resolve(baseDir, 'adapters.json');
@@ -169,7 +171,7 @@ export async function installAdapter(packageName) {
   // Install
   try {
     console.log(`Installing ${packageName} from npm...`);
-    execFileSync('npm', ['install', '--save', packageName], {
+    execFileSync(npmExecutable, ['install', '--save', packageName], {
       cwd: packagesDir,
       stdio: 'inherit',
     });
@@ -187,7 +189,7 @@ export async function installAdapter(packageName) {
   } catch (err) {
     // Uninstall on validation failure
     try {
-      execFileSync('npm', ['uninstall', packageName], { cwd: packagesDir, stdio: 'ignore' });
+      execFileSync(npmExecutable, ['uninstall', packageName], { cwd: packagesDir, stdio: 'ignore' });
     } catch (e) {
       // Ignore uninstall errors
     }
@@ -269,7 +271,7 @@ export function removeAdapter(name) {
   // Attempt to uninstall the npm package
   if (existsSync(packagesDir) && entry.package) {
     try {
-      execFileSync('npm', ['uninstall', entry.package], {
+      execFileSync(npmExecutable, ['uninstall', entry.package], {
         cwd: packagesDir,
         stdio: 'ignore',
       });

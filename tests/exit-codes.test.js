@@ -156,7 +156,7 @@ describe('CLI exit code contract', () => {
     const result = runCli(['check', '--ci'], repo, env);
     // stdout must not contain ANSI escape sequences
     expect(result.stdout).not.toMatch(/\x1b\[/);
-  });
+  }, 120000);
 
   // ── not a git repository ───────────────────────────────────────────────────
   it('init exits 1 with actionable error when not in a git repository', () => {

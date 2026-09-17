@@ -60,9 +60,25 @@ function createRepository() {
   return repo;
 }
 
-afterEach(() => {
+afterEach(async () => {
   while (tempRepos.length) {
-    rmSync(tempRepos.pop(), { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    const dir = tempRepos.pop();
+    let retries = 5;
+    while (retries > 0) {
+      try {
+        rmSync(dir, { recursive: true, force: true });
+        break;
+      } catch (err) {
+        if (err.code === 'ENOTEMPTY' || err.code === 'EBUSY' || err.code === 'EPERM') {
+          retries--;
+          if (retries === 0) throw err;
+          // Manual async sleep
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        } else {
+          throw err;
+        }
+      }
+    }
   }
 });
 

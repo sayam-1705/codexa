@@ -266,7 +266,6 @@ describe('validateConfig — leaderboard configuration', () => {
     const result = validateConfig(cfg({
       team: {
         blockThreshold: 1,
-        leaderboard: { enabled: true, optIn: true, metrics: ['cleanRuns'] },
         leaderboard: { enabled: true, optIn: ['test@example.com'], metrics: ['cleanRuns'] },
       },
     }));

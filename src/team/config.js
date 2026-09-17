@@ -58,7 +58,6 @@ export async function loadConfig(repoPath) {
       'package.json',
     ],
   });
-  const result = await explorer.search(repoPath);
   let result = null;
   try {
     result = await explorer.search(repoPath);
@@ -217,8 +216,6 @@ export function validateConfig(config) {
         if (leaderboard.enabled !== undefined && typeof leaderboard.enabled !== 'boolean') {
           errors.push('team.leaderboard.enabled must be a boolean');
         }
-        if (leaderboard.optIn !== undefined && typeof leaderboard.optIn !== 'boolean') {
-          errors.push('team.leaderboard.optIn must be a boolean');
         if (leaderboard.optIn !== undefined &&
             (!Array.isArray(leaderboard.optIn) || leaderboard.optIn.some((email) => typeof email !== 'string'))) {
           errors.push('team.leaderboard.optIn must be an array of strings');

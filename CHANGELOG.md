@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-09-18
+
+### Fixed
+
+- **Baseline fingerprinting**: Use `path.relative()` instead of string slicing to correctly compute relative file paths across all platforms, including Windows drive letters.
+- **Baseline integrity**: Added corrupted baseline file detection with clear error messaging; baseline update now refuses to save when adapter failures are present during initialization.
+- **Baseline filtering**: Fixed `filterBaselineFindings` to preserve warnings and minor findings when they match the baseline, and correctly move baseline findings into the `preexisting` category.
+- **Linter runner**: Added adapter failure policy support (`fail`, `warn`, `ignore`); added 30-second adapter lint timeout; adapter failures now filter by the configured language selection.
+- **Init command**: Fixed exit handling to use `process.exitCode` instead of `process.exit(1)`; added `--team`/`--no-team` flags; cleanup incomplete initialization by removing hooks and baseline files when scan fails; improved adapter failure reporting during initialization.
+- **Uninstall command**: Added retry logic (`maxRetries: 3`, `retryDelay: 100ms`) to file deletions for robustness on Windows and busy filesystems.
+- **Git hooks**: Fixed hook installation to preserve existing non-Codexa hooks with backup; added idempotent check to skip re-installation when a Codexa hook already exists; added `unlinkSync` import for hook cleanup.
+- **CI mode**: Fixed `--all-files` default behavior and added `--staged` flag; improved CI verification step to test blocking on new findings and validate JSON output structure.
+- **Cross-platform**: Fixed Windows drive letter case normalization in `relativeRepositoryPath`; resolved platform smoke test failures on Windows and macOS.
+- **CI/CD pipeline**: Fixed workflow issues preventing Windows integration and platform smoke tests from passing.
+- **Testing**: Fixed failing test cases and resolved Node.js integration test issues.
+- **Homebrew formula**: Updated SHA256 checksum for the published tarball.
+
+### Changed
+
+- Updated `vitest` devDependency from `3.1.4` to `^3.2.7` for improved test runner stability.
+- Updated documentation with comprehensive feature list matching implemented functionality.
+
 ## [1.1.3]
 
 ### Fixed

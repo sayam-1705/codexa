@@ -19,6 +19,7 @@ import { tmpdir } from 'os';
 // Using .pathname instead leaves a spurious leading slash (/C:/...) which
 // causes path.resolve() to treat the drive letter as a directory component.
 const repoRoot = resolve(fileURLToPath(new URL('../..', import.meta.url)));
+const pkgVersion = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')).version;
 const cliPath = join(repoRoot, 'bin', 'codexa.js');
 const consumerFixture = join(repoRoot, 'tests', 'fixtures', 'consumer-project');
 // The installed CLI shim in node_modules/.bin is "codexa.cmd" on Windows, "codexa" on Unix.
@@ -178,7 +179,7 @@ describe('repository integration workflow', () => {
       // local files. If it does fail, propagate the error.
       throw new Error(`npm pack failed: ${err.message}`);
     }
-    const tarball = join(packageDir, 'codexa-toolkit-1.1.3.tgz');
+    const tarball = join(packageDir, `codexa-toolkit-${pkgVersion}.tgz`);
     const consumer = join(packageDir, 'consumer');
     mkdirSync(consumer);
     cpSync(consumerFixture, consumer, { recursive: true });
@@ -206,7 +207,7 @@ describe('repository integration workflow', () => {
 
     const version = spawnSync(packagedCli, ['--version'], spawnOpts());
     expect(version.status).toBe(0);
-    expect(version.stdout).toContain('codexa 1.1.3');
+    expect(version.stdout).toContain(`codexa ${pkgVersion}`);
 
     const help = spawnSync(packagedCli, ['--help'], spawnOpts());
     expect(help.status).toBe(0);

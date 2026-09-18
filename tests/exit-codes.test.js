@@ -57,7 +57,7 @@ describe('CLI exit code contract', () => {
   it('--version exits 0', () => {
     const result = runCli(['--version']);
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain('1.1.3');
+    expect(result.stdout).toContain('1.1.4');
   });
 
   // ── --help ─────────────────────────────────────────────────────────────────
